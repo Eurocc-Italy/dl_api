@@ -20,15 +20,12 @@ import uuid
 
 #aider function ot query_post
 def escape_special_characters(content):
-
-    # Escape backslashes first
-    content = content.replace('\\', '\\\\')
     # Escape double quotes
     content = content.replace('"', '\\"')
     # Escape asterisks
     content = content.replace('*', '\*')
     # Escape single quotes
-    content = content.replace("'", "\\'")
+    content = content.replace("'", "\'")
     # Escape parentheses
     content = content.replace('(', '\(')
     content = content.replace(')', '\)')
