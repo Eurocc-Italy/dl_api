@@ -16,6 +16,24 @@ import six
 
 from swagger_server.models.update_path_body import UpdatePathBody  # noqa: E501
 from swagger_server import util
+import uuid
+
+def escape_special_characters(content):
+
+    # Escape double quotes
+    content = content.replace('"', '\\"')
+    # Escape asterisks
+    content = content.replace('*', '\*')
+    # Escape single quotes
+    content = content.replace("'", "\'")
+    # Escape parentheses
+    content = content.replace('(', '\(')
+    content = content.replace(')', '\)')
+    # Escape new lines
+    content = content.replace('\n', '\\n')
+    # Escape carriage returns
+    content = content.replace('\r', '\\r')
+    return content
 
 
 def delete_file(file_path):
@@ -107,14 +125,22 @@ def query_post(query_file=None, python_file=None):  # noqa: E501 ###At the momen
     """
     try:
         # Read the content directly from the FileStorage object and decode
-        query_content = query_file.read().decode('utf-8') if query_file else ""
-        python_content = python_file.read().decode('utf-8') if python_file else ""
+        query_content = query_file.read().decode('utf-8') if query_file else ''
+        python_content = python_file.read().decode('utf-8') if python_file else ''
 
-        # Create the formatted string
-        formatted_string = f'--query """{query_content}""" --script """{python_content}"""'
-        os.system("whoami")
+        # Generate a unique ID using the UUID library
+        unique_id = str(uuid.uuid4())
 
-        return formatted_string, 200
+        json_formatted_output = (f'dtaas_tui_server {{'
+                        f'"query": "{query_content}",'
+                        f'"script": "{python_content}",'
+                        f' "ID": "{unique_id}"}}')
+        
+        final_output = escape_special_characters(json_formatted_output)
+        # set final output as string
+        output_string = f'{final_output}'
+        
+        return output_string, 200
 
     except Exception as e:
         return f"An error occurred: {str(e)}", 500
