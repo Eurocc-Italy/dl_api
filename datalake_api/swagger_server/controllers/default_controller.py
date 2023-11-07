@@ -121,7 +121,7 @@ def query_post(query_file=None, python_file=None):  # noqa: E501 ###At the momen
 
 
 
-def replace_entry(path, file=None):  # noqa: E501###
+def replace_entry(path, file=None ,json_data=None):  # noqa: E501###
     """Replace an existing entry and its associated file in S3 for the given path in MongoDB
 
      # noqa: E501
@@ -136,8 +136,6 @@ def replace_entry(path, file=None):  # noqa: E501###
     :rtype: None
     """
         # Capture metadata and file from request
-        ### WE CAN DECIDE WHETHER TO INCLUDE THIS AS FILE INSTEAD THAN JSON IN TEXT IN CURL
-    metadata = request.form.get('metadata')
 
        # Initialize MongoDB client
     client = MongoClient('localhost', 27017)
@@ -170,11 +168,20 @@ def replace_entry(path, file=None):  # noqa: E501###
         if not existing_entry:
             return "Entry not found for the given path", 404
         
-        
-        if metadata:
-            metadata_obj = json.loads(metadata)
-            print(metadata_obj)
-            collection.find_one_and_replace({'path': {'$in': paths_to_check}}, metadata_obj)
+                # Step 2: Insert json_data into MongoDB
+        # Properly read json_data and insert it into MongoDB
+        json_data_str = json_data.read().decode('utf-8')
+        json_data_list = json.loads(json_data_str)
+
+        paths_to_check = [doc.get('path', '') for doc in json_data_list]
+        existing_entry = collection.find_one({'path': {'$in': paths_to_check}})
+
+
+        if existing_entry:
+            for doc in json_data_list:
+                if collection.find_one_and_update({'path': doc.get('path')}, {'$set': doc} ):
+                    print(f"Metadata updated,for path= {doc['path']}")
+                    json_data_list.remove(doc)
         
         # Step 3: Replace file in local folder if file is provided
         if file:
@@ -187,17 +194,17 @@ def replace_entry(path, file=None):  # noqa: E501###
             with open(local_file_path, 'wb') as f:
                 f.write(file.read())
         
-        return "file at provided path replaced successfully. If metadata was included this replaced metadata associated with replaced file, ELSE the uploaded file is associated with pre-existing metadata", 200
+        return "File updated succesfully, if metadata for file was included this has been updated", 200
 
     except Exception as e:
         return f"An error occurred: {str(e)}", 500
 
 
 
-def update_entry(path, body=None):  # noqa: E501
+def update_entry(path, file=None):  # noqa: E501
     """Update an existing entry in MongoDB based on the path and body."""
 
-    print(f"Debug: Received body = {body}")
+    print(f"Debug: Received body = {file}")
 
     # Initialize MongoDB client
     client = MongoClient('localhost', 27017)
@@ -226,13 +233,26 @@ def update_entry(path, body=None):  # noqa: E501
         if not existing_entry:
             return "Entry not found for the given path", 404
 
-        # Update MongoDB entry if body is provided
-        result = collection.find_one_and_update({'path': {'$in': paths_to_check}}, {'$set': body})
+        # Step 2: Insert json_data into MongoDB
+        # Properly read json_data and insert it into MongoDB
+        json_data_str = file.read().decode('utf-8')
+        json_data_list = json.loads(json_data_str)
 
-        if not result:
-            return "Failed to update entry in MongoDB", 400
+        paths_to_check = [doc.get('path', '') for doc in json_data_list]
+        existing_entry = collection.find_one({'path': {'$in': paths_to_check}})
 
-        return "Mongodb Entry  updated successfully", 200
+        if existing_entry:
+            for doc in json_data_list:
+                if collection.find_one_and_update({'path': doc.get('path')}, {'$set': doc} ):
+                    print(f"Metadata updated,for path= {doc['path']}")
+                    json_data_list.remove(doc)
+                    file_replacement = True
+
+        # Step 3: Success message
+        if file_replacement:
+            return "Metadata is Updated Succesfully", 201
+        else:
+            return "Metadata not replaced ", 400
 
     except Exception as e:
         return f"An error occurred: {str(e)}", 500

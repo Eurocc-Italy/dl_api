@@ -53,7 +53,7 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/replace_path_body'
+              $ref: '#/components/schemas/upload_body'
       responses:
         "200":
           description: Entry and file replaced successfully
@@ -62,7 +62,7 @@ paths:
       x-openapi-router-controller: swagger_server.controllers.default_controller
   /update/{path}:
     patch:
-      summary: Update an entry and optionally the file for the given path in MongoDB
+      summary: Update metadata in MongoDB for a file given its path
       operationId: update_entry
       parameters:
       - name: path
@@ -74,7 +74,7 @@ paths:
           type: string
       requestBody:
         content:
-          application/json:
+          multipart/form-data:
             schema:
               $ref: '#/components/schemas/update_path_body'
       responses:
@@ -226,6 +226,6 @@ components:
     update_path_body:
       type: object
       properties:
-        metadata:
-          type: object
-
+        file:
+          type: string
+          format: binary
