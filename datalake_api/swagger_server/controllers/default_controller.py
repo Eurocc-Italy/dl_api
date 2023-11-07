@@ -18,14 +18,17 @@ from swagger_server.models.update_path_body import UpdatePathBody  # noqa: E501
 from swagger_server import util
 import uuid
 
+#aider function ot query_post
 def escape_special_characters(content):
 
+    # Escape backslashes first
+    content = content.replace('\\', '\\\\')
     # Escape double quotes
     content = content.replace('"', '\\"')
     # Escape asterisks
     content = content.replace('*', '\*')
     # Escape single quotes
-    content = content.replace("'", "\'")
+    content = content.replace("'", "\\'")
     # Escape parentheses
     content = content.replace('(', '\(')
     content = content.replace(')', '\)')
@@ -33,6 +36,9 @@ def escape_special_characters(content):
     content = content.replace('\n', '\\n')
     # Escape carriage returns
     content = content.replace('\r', '\\r')
+        # Escape single quotes
+    content = content.replace("'", "\\'")
+
     return content
 
 
