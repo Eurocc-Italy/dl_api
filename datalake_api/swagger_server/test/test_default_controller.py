@@ -5,6 +5,7 @@ from __future__ import absolute_import
 from flask import json
 from six import BytesIO
 
+from swagger_server.models.update_path_body import UpdatePathBody  # noqa: E501
 from swagger_server.test import BaseTestCase
 
 
@@ -53,8 +54,8 @@ class TestDefaultController(BaseTestCase):
 
         Replace an existing entry and its associated file in S3 for the given path in MongoDB
         """
-        data = dict(file='file_example',
-                    json_data='json_data_example')
+        data = dict(metadata='metadata_example',
+                    file='file_example')
         response = self.client.open(
             '/v1/replace/{path}'.format(path='path_example'),
             method='PUT',
@@ -66,14 +67,14 @@ class TestDefaultController(BaseTestCase):
     def test_update_entry(self):
         """Test case for update_entry
 
-        Update metadata in MongoDB for a file given its path
+        Update an entry and optionally the file for the given path in MongoDB
         """
-        data = dict(file='file_example')
+        body = UpdatePathBody()
         response = self.client.open(
             '/v1/update/{path}'.format(path='path_example'),
             method='PATCH',
-            data=data,
-            content_type='multipart/form-data')
+            data=json.dumps(body),
+            content_type='application/json')
         self.assert200(response,
                        'Response body is : ' + response.data.decode('utf-8'))
 

@@ -229,4 +229,3 @@ components:
         file:
           type: string
           format: binary
-

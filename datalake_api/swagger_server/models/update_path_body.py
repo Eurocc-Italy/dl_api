@@ -14,20 +14,20 @@ class UpdatePathBody(Model):
 
     Do not edit the class manually.
     """
-    def __init__(self, file: str=None):  # noqa: E501
+    def __init__(self, metadata: object=None):  # noqa: E501
         """UpdatePathBody - a model defined in Swagger
 
-        :param file: The file of this UpdatePathBody.  # noqa: E501
-        :type file: str
+        :param metadata: The metadata of this UpdatePathBody.  # noqa: E501
+        :type metadata: object
         """
         self.swagger_types = {
-            'file': str
+            'metadata': object
         }
 
         self.attribute_map = {
-            'file': 'file'
+            'metadata': 'metadata'
         }
-        self._file = file
+        self._metadata = metadata
 
     @classmethod
     def from_dict(cls, dikt) -> 'UpdatePathBody':
@@ -41,22 +41,22 @@ class UpdatePathBody(Model):
         return util.deserialize_model(dikt, cls)
 
     @property
-    def file(self) -> str:
-        """Gets the file of this UpdatePathBody.
+    def metadata(self) -> object:
+        """Gets the metadata of this UpdatePathBody.
 
 
-        :return: The file of this UpdatePathBody.
-        :rtype: str
+        :return: The metadata of this UpdatePathBody.
+        :rtype: object
         """
-        return self._file
+        return self._metadata
 
-    @file.setter
-    def file(self, file: str):
-        """Sets the file of this UpdatePathBody.
+    @metadata.setter
+    def metadata(self, metadata: object):
+        """Sets the metadata of this UpdatePathBody.
 
 
-        :param file: The file of this UpdatePathBody.
-        :type file: str
+        :param metadata: The metadata of this UpdatePathBody.
+        :type metadata: object
         """
 
-        self._file = file
+        self._metadata = metadata
