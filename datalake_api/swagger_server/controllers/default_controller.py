@@ -18,7 +18,7 @@ from swagger_server.models.update_path_body import UpdatePathBody  # noqa: E501
 from swagger_server import util
 import uuid
 
-#aider function ot query_post
+#aider function to query_post
 def escape_special_characters(content):
     # Escape double quotes
     content = content.replace('"', '\\"')

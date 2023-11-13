@@ -5,5 +5,5 @@ setuptools
 swagger-ui-bundle
 pymongo == 4.5.0
 sh
-pyparsing
+pyparsingl
 sqlparse
