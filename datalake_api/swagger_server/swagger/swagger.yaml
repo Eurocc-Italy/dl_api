@@ -36,17 +36,15 @@ paths:
                 type: string
                 x-content-type: text/plain
       x-openapi-router-controller: swagger_server.controllers.default_controller
-  /replace/{path}:
+  /replace:
     put:
       summary: Replace an existing entry and its associated file in S3 for the given
         path in MongoDB
       operationId: replace_entry
       parameters:
       - name: path
-        in: path
+        in: query
         required: true
-        style: simple
-        explode: false
         schema:
           type: string
       requestBody:
@@ -60,16 +58,14 @@ paths:
         "404":
           description: Path not found in the database
       x-openapi-router-controller: swagger_server.controllers.default_controller
-  /update/{path}:
+  /update:
     patch:
       summary: Update metadata in MongoDB for a file given its path
       operationId: update_entry
       parameters:
       - name: path
-        in: path
+        in: query
         required: true
-        style: simple
-        explode: false
         schema:
           type: string
       requestBody:
@@ -83,16 +79,14 @@ paths:
         "404":
           description: Path not found in the database
       x-openapi-router-controller: swagger_server.controllers.default_controller
-  /download/{id}:
+  /download:
     get:
       summary: Download an item (using item path) from the datalake
       operationId: download_id_get
       parameters:
       - name: id
-        in: path
+        in: query
         required: true
-        style: simple
-        explode: false
         schema:
           type: string
       responses:
@@ -125,17 +119,15 @@ paths:
                 type: string
                 x-content-type: text/plain
       x-openapi-router-controller: swagger_server.controllers.default_controller
-  /delete/{file_path}:
+  /delete:
     delete:
       summary: Delete a file in datalake (S3) and its MongoDB entry based on the given
         file_path
       operationId: delete_file
       parameters:
       - name: file_path
-        in: path
+        in: query
         required: true
-        style: simple
-        explode: false
         schema:
           type: string
       responses:
