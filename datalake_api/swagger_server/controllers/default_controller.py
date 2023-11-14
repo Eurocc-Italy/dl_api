@@ -57,7 +57,7 @@ def delete_file(file_path):
         print(f"Debug: absolute_path = {absolute_path}")
         
         # Create a JSON-like object for MongoDB query
-        paths_to_check = [f'"{absolute_path}"']
+        paths_to_check = [f'{absolute_path}']
         
         # Debug print: Output the paths_to_check before MongoDB query
         print(f"Debug: paths_to_check before query = {paths_to_check}")
@@ -190,7 +190,7 @@ def replace_entry(path, file=None ,json_data=None):  # noqa: E501###
         print(f"Debug: absolute_path = {absolute_path}")
         
         # Create a JSON-like object for MongoDB query
-        paths_to_check = [f'"{absolute_path}"']
+        paths_to_check = [f'{absolute_path}']
         
         # Debug print: Output the paths_to_check before MongoDB query
         print(f"Debug: paths_to_check before query = {paths_to_check}")
@@ -256,7 +256,7 @@ def update_entry(path, file=None):  # noqa: E501
         print(f"Debug: Absolute path = {absolute_path}")
 
         # Create a JSON-like object for MongoDB query
-        paths_to_check = [f'"{absolute_path}"']
+        paths_to_check = [f'{absolute_path}']
         
         # Debug print: Output the paths_to_check before MongoDB query
         print(f"Debug: paths_to_check before query = {paths_to_check}")
