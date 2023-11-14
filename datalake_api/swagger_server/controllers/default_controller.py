@@ -17,7 +17,9 @@ import six
 from swagger_server.models.update_path_body import UpdatePathBody  # noqa: E501
 from swagger_server import util
 import uuid
+import logging
 
+logger = logging.getLogger()
 #aider function to query_post
 def escape_special_characters(content):
     # Escape double quotes
@@ -102,6 +104,10 @@ def download_id_get(id_):  # noqa: E501
         print(f"Debugging: Absolute path = {file_path}")
         print(f"Debugging: Current working directory = {os.getcwd()}")
 
+        logger.info(f"Debugging: Absolute path = {file_path}")
+        logger.info(f"Debugging: Received path = {id_}")
+        logger.info(f"Debugging: Current working directory = {os.getcwd()}")
+        
         # Check if the file exists before attempting to send it
         if os.path.exists(file_path):
             return send_file(file_path, as_attachment=True), 200
@@ -301,8 +307,8 @@ def upload_post(file, json_data):
     file_replacement = False
     
     try:
-        # Step 1: Save File --> THIS WILL THEN BE THE PATH/URL for S3
-        file_path = "C:\\Users\\IvanGentile\\OneDrive - Net Service S.p.A\\Desktop\\API_test_files\\COCO_dataset"
+        # Step 1: Save File --> THIS WILL THEN BE THE PATH/URL for S3*****************************************
+        file_path = "home/centos/dtaas_test_api/COCO_dataset"
         with open(os.path.join(file_path, file.filename), 'wb') as f:
             f.write(file.read())
         
