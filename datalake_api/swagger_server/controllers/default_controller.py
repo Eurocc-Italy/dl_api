@@ -178,7 +178,7 @@ def replace_entry(path, file=None ,json_data=None):  # noqa: E501###
     collection = db['metadata']
 
     # Specify the local folder for file storage
-    local_folder = "home/centos/dtaas_test_api/COCO_dataset"
+    local_folder = "/home/centos/dtaas_test_api/COCO_dataset"
 
     try:
         # Check if the received path is an absolute path or relative to the current working directory
@@ -247,7 +247,7 @@ def update_entry(path, file=None):  # noqa: E501
     collection = db['metadata']
 
     # Specify local folder for file storage
-    local_folder = "home/centos/dtaas_test_api/COCO_dataset"
+    local_folder = "/home/centos/dtaas_test_api/COCO_dataset"
 
     try:
         # Determine absolute path
