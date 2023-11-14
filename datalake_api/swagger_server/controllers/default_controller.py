@@ -19,7 +19,6 @@ from swagger_server import util
 import uuid
 import logging
 
-logger = logging.getLogger()
 #aider function to query_post
 def escape_special_characters(content):
     # Escape double quotes
@@ -103,10 +102,6 @@ def download_id_get(id_):  # noqa: E501
         print(f"Debugging: Received path = {id_}")
         print(f"Debugging: Absolute path = {file_path}")
         print(f"Debugging: Current working directory = {os.getcwd()}")
-
-        logger.info(f"Debugging: Absolute path = {file_path}")
-        logger.info(f"Debugging: Received path = {id_}")
-        logger.info(f"Debugging: Current working directory = {os.getcwd()}")
         
         # Check if the file exists before attempting to send it
         if os.path.exists(file_path):
@@ -140,7 +135,7 @@ def query_post(query_file=None, python_file=None):  # noqa: E501 ###At the momen
         # Generate a unique ID using the UUID library
         unique_id = str(uuid.uuid4())
 
-        json_formatted_output = (f'dtaas_tui_server {{'
+        json_formatted_output = (f'dtaas_tui_client {{'
                         f'"query": "{query_content}",'
                         f'"script": "{python_content}",'
                         f' "ID": "{unique_id}"}}')
