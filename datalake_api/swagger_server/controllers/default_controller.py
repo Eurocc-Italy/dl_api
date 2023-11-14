@@ -308,7 +308,7 @@ def upload_post(file, json_data):
     
     try:
         # Step 1: Save File --> THIS WILL THEN BE THE PATH/URL for S3*****************************************
-        file_path = "home/centos/dtaas_test_api/COCO_dataset"
+        file_path = "/home/centos/dtaas_test_api/COCO_dataset"
         with open(os.path.join(file_path, file.filename), 'wb') as f:
             f.write(file.read())
         
