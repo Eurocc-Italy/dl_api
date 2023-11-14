@@ -1,7 +1,7 @@
 [
     {
         "id": 221102,
-        "path": "COCO_dataset/airplane_0582.jpg",
+        "path": "/home/centos/dtaas_test_api/COCO_dataset/airplane_0582.jpg",
         "height": 480,
         "width": 640,
         "captured": "2013-11-14 11:38:44",
@@ -19,7 +19,7 @@
     },
     {
         "id": 221103,
-        "path": "COCO_dataset/airplane_0583.jpg",
+        "path": "/home/centos/dtaas_test_api/COCO_dataset/airplane_0583.jpg",
         "height": 336,
         "width": 500,
         "captured": "2013-11-14 12:36:29",
@@ -37,7 +37,7 @@
     },
     {
         "id": 221104,
-        "path": "COCO_dataset/airplane_0584.jpg",
+        "path": "/home/centos/dtaas_test_api/COCO_dataset/airplane_0584.jpg",
         "height": 640,
         "width": 556,
         "captured": "2013-11-14 13:02:53",
@@ -55,7 +55,7 @@
     },
     {
         "id": 221105,
-        "path": "COCO_dataset/airplane_0585.jpg",
+        "path": "/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg",
         "height": 640,
         "width": 426,
         "captured": "2013-11-14 16:03:19",
@@ -73,7 +73,7 @@
     },
     {
         "id": 220006,
-        "path": "COCO_dataset/airplane_0586.jpg",
+        "path": "/home/centos/dtaas_test_api/COCO_dataset/airplane_0586.jpg",
         "height": 427,
         "width": 640,
         "captured": "2013-11-14 17:02:52",
