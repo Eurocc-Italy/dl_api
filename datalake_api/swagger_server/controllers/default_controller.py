@@ -21,7 +21,7 @@ import logging
 
 import subprocess
 from tempfile import mkdtemp
-from sh import pushd  # Import pushd from the sh library
+#from sh import pushd  # Import pushd from the sh library
 
 #aider function to query_post
 def escape_special_characters(content):
@@ -148,15 +148,15 @@ def query_post(query_file=None, python_file=None):
             json.dump(launch_data, launch_out, indent=4)
 
         # Execute the command within the temporary directory
-        with pushd(tdir):
-            command = f"dtaas_tui_server {launch_path}"
-            stdout, stderr = subprocess.Popen(
-                command,
-                shell=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            ).communicate()
-
+    #    with pushd(tdir):
+    #        command = f"dtaas_tui_server {launch_path}"
+    #        stdout, stderr = subprocess.Popen(
+    #            command,
+    #            shell=True,
+    #            stdout=subprocess.PIPE,
+    #            stderr=subprocess.PIPE,
+    #        ).communicate()
+        #shutil.rmtree(tdir)
         return f"Files processed successfully, ID: {unique_id}", 200
 
     except Exception as e:
@@ -357,3 +357,36 @@ def upload_post(file, json_data):
 
 
 
+def get_config():
+    #config_file_path = "C:\\Users\\IvanGentile\\OneDrive - Net Service S.p.A\\Desktop\\API_datalake_gitlab\\dtaas_test_api\\single_entry_metadata_test.json"
+    #try:
+    #    if os.path.exists(config_file_path):
+    #        with open(config_file_path, 'r') as file:
+    #            config_data = json.load(file)
+    #        return config_data, 200
+    #    else:
+    #        return {"error": "Configuration not found"}, 404
+    #except Exception as e:
+    #    return {"error": str(e)}, 500
+    return print("out of service for now")
+
+def update_config():
+    #config_file_path = "C:\\Users\\IvanGentile\\OneDrive - Net Service S.p.A\\Desktop\\API_datalake_gitlab\\dtaas_test_api\\single_entry_metadata_test.json"
+    #try:
+    #    # Extract new_config from the request
+    #    if 'new_config' not in request.files:
+    #        return {"error": "new_config file not provided"}, 400
+    #    
+    #    new_config_file = request.files['new_config']
+    #    new_config = json.load(new_config_file)
+#
+    #    # Update the configuration
+    #    with open(config_file_path, 'w') as file:
+    #        json.dump(new_config, file, indent=4)
+    #    return {"message": "Configuration updated successfully"}, 200
+#
+    #except json.JSONDecodeError as e:
+    #    return {"error": f"Invalid JSON format: {str(e)}"}, 400
+    #except Exception as e:
+    #    return {"error": str(e)}, 500
+    return print("out of service for now")
