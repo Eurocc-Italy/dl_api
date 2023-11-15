@@ -184,8 +184,8 @@ components:
           description: Width of the image in pixels.
     query_and_process_body:
       required:
-      - python_file
       - query_file
+      - python_file
       type: object
       properties:
         query_file:

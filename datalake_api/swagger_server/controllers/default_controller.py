@@ -19,6 +19,10 @@ from swagger_server import util
 import uuid
 import logging
 
+import subprocess
+from tempfile import mkdtemp
+from sh import pushd  # Import pushd from the sh library
+
 #aider function to query_post
 def escape_special_characters(content):
     # Escape double quotes
@@ -114,41 +118,49 @@ def download_id_get(id_):  # noqa: E501
         return "Internal Server Error", 500
 
 
-
-def query_post(query_file=None, python_file=None):  # noqa: E501 ###At the moment prints also new lines
-    """Query (sql in .txt) and Manipulate (file.py) datalake items
-
-     # noqa: E501
-
-    :param query_file: 
-    :type query_file: strstr
-    :param python_file: 
-    :type python_file: strstr
-
-    :rtype: str
-    """
+def query_post(query_file=None, python_file=None):
     try:
-        # Read the content directly from the FileStorage object and decode
-        query_content = query_file.read().decode('utf-8') if query_file else ''
-        python_content = python_file.read().decode('utf-8') if python_file else ''
+        # Ensure the query file is provided
+        if not query_file:
+            return "Missing query file", 400
 
-        # Generate a unique ID using the UUID library
+        # Generate a unique ID and create a temporary directory
         unique_id = str(uuid.uuid4())
+        tdir = mkdtemp(prefix=unique_id, dir=os.getcwd())
 
-        json_formatted_output = (f'dtaas_tui_client {{'
-                        f'"query": "{query_content}",'
-                        f'"script": "{python_content}",'
-                        f' "ID": "{unique_id}"}}')
-        
-        final_output = escape_special_characters(json_formatted_output)
-        # set final output as string
-        output_string = f'{final_output}'
-        
-        return output_string, 200
+        # Read and store sql_query.txt
+        query_content = query_file.read().decode('utf-8')
+
+        # Save script.py in the temporary directory
+        script_filename = f"user_script_{unique_id}.py"
+        script_path = os.path.join(tdir, script_filename)
+        with open(script_path, 'w') as script_out:
+            script_out.write(python_file.read().decode('utf-8'))
+
+        # Prepare and save launch.json in the temporary directory
+        launch_data = {
+            "sql_query": query_content,
+            "script_path": script_path,
+            "ID": unique_id
+        }
+        launch_path = os.path.join(tdir, 'launch.json')
+        with open(launch_path, 'w') as launch_out:
+            json.dump(launch_data, launch_out, indent=4)
+
+        # Execute the command within the temporary directory
+        with pushd(tdir):
+            command = f"dtaas_tui_server {launch_path}"
+            stdout, stderr = subprocess.Popen(
+                command,
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            ).communicate()
+
+        return f"Files processed successfully, ID: {unique_id}", 200
 
     except Exception as e:
         return f"An error occurred: {str(e)}", 500
-
 
 
 def replace_entry(path, file=None ,json_data=None):  # noqa: E501###
