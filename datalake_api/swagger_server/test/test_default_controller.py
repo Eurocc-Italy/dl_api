@@ -12,19 +12,27 @@ from swagger_server.test import BaseTestCase
 class TestDefaultController(BaseTestCase):
     """DefaultController integration test stubs"""
 
+    def assert200WithDetailsDELETE(self, response, test_case_description):
+        self.assert200(response, f"Response for {test_case_description}")
+        print("\n" + "=" * 80)
+        print(f"SUCCESS: {test_case_description}")
+        print(f"Response Status: {response.status_code}")
+        print(f"Response Body: {response.data.decode('utf-8')}")
+        print("=" * 80 + "\n")
+    
     def test_delete_file(self):
         """Test case for delete_file
 
         Delete a file in datalake (S3) and its MongoDB entry based on the given file_path
         """
         #Remember the file path below must be registered in the MongoDB, else it won't be recognized.
+        # The file path below is hardcoded in the test within the response 
         file_path = '/home/centos/dtaas_test_api/priceDetail.png'
         response = self.client.open(
             f'/v1/delete?file_path=%2Fhome%2Fcentos%2Fdtaas_test_api%2FpriceDetail.png',
             method='DELETE'
         )
-        self.assert200(response,
-                       'Response body is : ' + response.data.decode('utf-8'))
+        self.assert200WithDetailsDELETE(response, f"Delete file at {file_path}")
 
     def test_download_id_get(self):
         """Test case for download_id_get
