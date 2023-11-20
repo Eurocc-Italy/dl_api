@@ -268,21 +268,21 @@ class TestDefaultController(BaseTestCase):
         valid_path = '/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg'
 
     # Use a realistic file content for the test, like an actual image file in bytes
-        with open('/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg', 'rb') as img_file:
+        with open('airplane_0585.jpg', 'rb') as img_file:
             image_content = img_file.read()
 
         file = FileStorage(
             stream=BytesIO(image_content),
             filename='airplane_0585.jpg',
-            content_type='image/jpeg'
+            content_type='application/octet-stream'
         )
 
         metadata_content = '{"id": 32,"path": "/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg"}'  # Ensure this is correctly formatted
         metadata_file = FileStorage(stream=BytesIO(metadata_content.encode()), filename='metadata.json')
 
         data = {
-            'json_data': metadata_file,
-            'file': file
+            'file': file,
+            'json_data': metadata_file
         }
 
         response = self.client.open(
