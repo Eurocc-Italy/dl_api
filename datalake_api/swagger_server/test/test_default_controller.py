@@ -188,33 +188,61 @@ class TestDefaultController(BaseTestCase):
     #Query_and_Process
 
 
-def test_query_post_successful_execution(self):
-    """Test case for successful query and process execution."""
-    # Simulate a query file and a Python file
-    query_file_content = "SELECT * FROM your_table;"  # Example SQL query
-    python_file_content = "print('Hello, world!')"    # Example Python script
+    def test_query_post_successful_execution(self):
+        """Test case for successful query and process execution."""
+        # Simulate a query file and a Python file
+        query_file_content = "SELECT * FROM your_table;"  # Example SQL query
+        python_file_content = "print('Hello, world!')"    # Example Python script
 
-    # Create file-like objects for both files
-    query_file = (BytesIO(query_file_content.encode()), 'query.txt')
-    python_file = (BytesIO(python_file_content.encode()), 'script.py')
+        # Create file-like objects for both files
+        query_file = (BytesIO(query_file_content.encode()), 'query.txt')
+        python_file = (BytesIO(python_file_content.encode()), 'script.py')
 
-    # Prepare the data dictionary
-    data = {
-        'query_file': query_file,
-        'python_file': python_file
-    }
+        # Prepare the data dictionary
+        data = {
+            'query_file': query_file,
+            'python_file': python_file
+        }
 
-    response = self.client.open(
-        '/v1/query_and_process',
-        method='POST',
-        data=data,
-        content_type='multipart/form-data'
-    )
-    self.assert200WithDetailsQUERYPROCESS(response, query_file, python_file)
+        response = self.client.open(
+            '/v1/query_and_process',
+            method='POST',
+            data=data,
+            content_type='multipart/form-data'
+        )
+        self.assert200WithDetailsQUERYPROCESS(response, query_file, python_file)
 
-
-
-    ################################################################
+    # Test for successful query and process execution
+    #def test_query_post_successful_execution(self):
+    #    # Setup and execute test for successful file processing
+    #    # ...
+#
+    ## Test when the query file is missing
+    #def test_query_post_missing_query_file(self):
+    #    # Setup and execute test for missing query file scenario
+    #    # ...
+#
+    ## Test when the Python file is missing (if applicable)
+    #def test_query_post_missing_python_file(self):
+    #    # Setup and execute test for missing Python file scenario
+    #    # ...
+#
+    ## Test for invalid or corrupted file formats
+    #def test_query_post_invalid_file_formats(self):
+    #    # Setup and execute test for invalid file format scenario
+    #    # ...
+#
+    ## Test error handling during file processing
+    #def test_query_post_error_in_processing(self):
+    #    # Setup and execute test for simulating an error in processing
+    #    # ...
+#
+    ## Test file handling and cleanup after processing
+    #def test_query_post_file_handling_and_cleanup(self):
+    #    # Setup and execute test to check file handling and cleanup
+    #    # ...
+#
+    #################################################################
     #REPLACE ENTRY
     def test_replace_entry(self):
         """Test case for replace_entry
