@@ -5,6 +5,8 @@ from __future__ import absolute_import
 from flask import json
 from six import BytesIO
 
+from werkzeug.datastructures import FileStorage
+
 from swagger_server.models.update_path_body import UpdatePathBody  # noqa: E501
 from swagger_server.test import BaseTestCase
 import urllib.parse
@@ -190,15 +192,18 @@ class TestDefaultController(BaseTestCase):
 
     def test_query_post_successful_execution(self):
         """Test case for successful query and process execution."""
-        # Simulate a query file and a Python file
-        query_file_content = "SELECT * FROM your_table;"  # Example SQL query
-        python_file_content = "print('Hello, world!')"    # Example Python script
+        query_file_content = "SELECT * FROM your_table;"
+        python_file_content = "print('Hello, world!')"
 
-        # Create file-like objects for both files
-        query_file = (BytesIO(query_file_content.encode()), 'query.txt')
-        python_file = (BytesIO(python_file_content.encode()), 'script.py')
+        query_file = FileStorage(
+            stream=BytesIO(query_file_content.encode()), 
+            filename='query.txt'
+        )
+        python_file = FileStorage(
+            stream=BytesIO(python_file_content.encode()), 
+            filename='script.py'
+        )
 
-        # Prepare the data dictionary
         data = {
             'query_file': query_file,
             'python_file': python_file
