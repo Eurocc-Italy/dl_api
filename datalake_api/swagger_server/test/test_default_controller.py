@@ -8,10 +8,12 @@ from six import BytesIO
 from swagger_server.models.update_path_body import UpdatePathBody  # noqa: E501
 from swagger_server.test import BaseTestCase
 import urllib.parse
-import threading
+#import threading
 
 class TestDefaultController(BaseTestCase):
     """DefaultController integration test stubs"""
+    #The special assert for succefull execution are implemented for the most important tests.
+    # Notice that by default Nothing prints if the test works
 
     def assert200WithDetailsDELETE(self, response, test_case_description):
         self.assert200(response, f"Response for {test_case_description}")
@@ -21,6 +23,53 @@ class TestDefaultController(BaseTestCase):
         print(f"Response Body: {response.data.decode('utf-8')}")
         print("=" * 80 + "\n")
     
+    def assert200WithDetailsDOWNLOAD(self, response, file_id):
+        self.assert200(response, "Successful download response")
+        print("\n" + "=" * 80)
+        print(f"SUCCESS: Downloaded file with ID '{file_id}'")
+        print(f"Response Status: {response.status_code}")
+        print(f"Content-Type: {response.content_type}")
+        print(f"Content-Disposition: {response.headers.get('Content-Disposition', 'N/A')}")
+        print(f"Response Size: {len(response.data)} bytes")
+        print("=" * 80 + "\n")
+    
+    ################################################################
+    #DOWNLOAD
+
+    def test_download_successful(self):
+     """Test case for successfully downloading an item from the datalake."""
+     existing_file_id = 'path/to/existing/file'  # Replace with a valid file path
+     response = self.client.open(
+          f'/v1/download/{existing_file_id}',
+          method='GET'
+     )
+     self.assert200WithDetailsDOWNLOAD(response, existing_file_id)
+
+    def test_download_file_not_found(self):
+        """Test case for attempting to download a file that doesn't exist."""
+        nonexistent_file_id = 'path/to/nonexistent/file'
+        response = self.client.open(
+            f'/v1/download/{nonexistent_file_id}',
+            method='GET'
+            )
+        self.assertEqual(response.status_code, 404, "Expected 404 for nonexistent file")
+
+    def test_download_invalid_file_path(self):
+        """Test case for downloading with an invalid file path."""
+        invalid_file_id = 'invalid\\file\\path'
+        response = self.client.open(
+            f'/v1/download/{invalid_file_id}',
+            method='GET'
+            )
+        self.assertEqual(response.status_code, 400, "Expected 400 for invalid file path")
+
+
+
+
+
+
+    ################################################################
+    #DELETE
     def test_delete_succesful(self):
         """Test case for delete_file
 
@@ -28,7 +77,6 @@ class TestDefaultController(BaseTestCase):
         """
         # !!! Remember the file path below must be registered in the MongoDB, else it won't be recognized !!!
         # The file path below is hardcoded in the test within the response 
-        print("ciao bello")
         file_path = '/home/centos/dtaas_test_api/priceDetail.png'
         response = self.client.open(
             f'/v1/delete?file_path=%2Fhome%2Fcentos%2Fdtaas_test_api%2FpriceDetail.png',
@@ -38,7 +86,6 @@ class TestDefaultController(BaseTestCase):
 
     def test_delete_nonexistent_file(self):
         """Test case for attempting to delete a nonexistent file."""
-        print("Running test_delete_nonexistent_file")
         response = self.client.open(
             f'/v1/delete?file_path={urllib.parse.quote("/path/to/nonexistentfile")}',
             method='DELETE'
@@ -68,7 +115,6 @@ class TestDefaultController(BaseTestCase):
     #     )
     #         self.assertEqual(response.status_code, 500, "Expected 500 for database connectivity issue")
 
-     
     ### Concurrent deletion 
     # import threading
     # def test_delete_concurrent(self):
@@ -88,16 +134,6 @@ class TestDefaultController(BaseTestCase):
     # Additional assertions to check the outcome of concurrent requests
 
 
-    def test_download_id_get(self):
-        """Test case for download_id_get
-
-        Download an item (using item path) from the datalake
-        """
-        response = self.client.open(
-            '/v1/download/{id}'.format(id='id_example'),
-            method='GET')
-        self.assert200(response,
-                       'Response body is : ' + response.data.decode('utf-8'))
 
     def test_query_post(self):
         """Test case for query_post

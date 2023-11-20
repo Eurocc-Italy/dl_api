@@ -53,6 +53,8 @@ def is_valid_file_path(path):
     # Example check (you might need a more sophisticated validation based on your requirements)
     return not any(char in path for char in ['\\', ':', '*', '?', '"', '<', '>', '|'])
 
+
+
 def delete_file(file_path):
     # Initialize MongoDB client
     client = MongoClient('localhost', 27017)
@@ -100,7 +102,6 @@ def delete_file(file_path):
             return "File path not found in the database", 404
     except Exception as e:
         return f"An error occurred: {str(e)}", 500
-
 
 
 def download_id_get(id_):  # noqa: E501
