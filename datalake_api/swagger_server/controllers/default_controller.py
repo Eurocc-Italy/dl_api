@@ -64,15 +64,17 @@ def download_id_get(id_):  # noqa: E501
     :rtype: None
     """
     try:
-        # Validate the file path format
-        if not is_valid_file_path(file_path):
-            return "Invalid file path format", 400
-        
+ 
         # Check if the received path is an absolute path or relative to the current working directory
         if os.path.isabs(id_):
             file_path = id_
         else:
             file_path = os.path.join(os.getcwd(), id_)
+
+               # Validate the file path format
+        if not is_valid_file_path(file_path):
+            return "Invalid file path format", 400
+        
 
         print(f"Debugging: Received path = {id_}")
         print(f"Debugging: Absolute path = {file_path}")
@@ -88,7 +90,7 @@ def download_id_get(id_):  # noqa: E501
         print(f"An error occurred: {e}")
         return "Internal Server Error", 500
     
-    
+
 def delete_file(file_path):
     # Initialize MongoDB client
     client = MongoClient('localhost', 27017)
