@@ -263,38 +263,38 @@ class TestDefaultController(BaseTestCase):
 #
     #################################################################
     #REPLACE ENTRY
-def test_replace_entry_successful(self):
-    """Test case for successful replacement of an entry and its file."""
-    valid_path = '/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg'
+    def test_replace_entry_successful(self):
+        """Test case for successful replacement of an entry and its file."""
+        valid_path = '/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg'
 
     # Use a realistic file content for the test, like an actual image file in bytes
-    with open('/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg', 'rb') as img_file:
-        image_content = img_file.read()
+        with open('/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg', 'rb') as img_file:
+            image_content = img_file.read()
 
-    file = FileStorage(
-        stream=BytesIO(image_content),
-        filename='airplane_0585.jpg',
-        content_type='image/jpeg'
-    )
+        file = FileStorage(
+            stream=BytesIO(image_content),
+            filename='airplane_0585.jpg',
+            content_type='image/jpeg'
+        )
 
-    metadata_content = '{"id": 32,"path": "/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg"}'  # Ensure this is correctly formatted
-    metadata_file = FileStorage(stream=BytesIO(metadata_content.encode()), filename='metadata.json')
+        metadata_content = '{"id": 32,"path": "/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg"}'  # Ensure this is correctly formatted
+        metadata_file = FileStorage(stream=BytesIO(metadata_content.encode()), filename='metadata.json')
 
-    data = {
-        'json_data': metadata_file,
-        'file': file
-    }
+        data = {
+            'json_data': metadata_file,
+            'file': file
+        }
 
-    response = self.client.open(
-        f'/v1/replace/{valid_path}',  # Use path parameter
-        method='PUT',
-        data=data,
-        content_type='multipart/form-data'
-    )
-    self.assert200WithReplaceDetails(response, valid_path, metadata_file, file)
+        response = self.client.open(
+            f'/v1/replace/{valid_path}',  # Use path parameter
+            method='PUT',
+            data=data,
+            content_type='multipart/form-data'
+        )
+        self.assert200WithReplaceDetails(response, valid_path, metadata_file, file)
 
 
-    
+
     #################################################################
     #UPDATE ENTRY
     def test_update_entry(self):
