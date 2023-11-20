@@ -17,9 +17,11 @@ class TestDefaultController(BaseTestCase):
 
         Delete a file in datalake (S3) and its MongoDB entry based on the given file_path
         """
+        file_path = '/home/centos/dtaas_test_api/priceDetails.png'
         response = self.client.open(
-            '/v1/delete/{file_path}'.format(file_path='file_path_example'),
-            method='DELETE')
+            f'/v1/delete/{file_path}',
+            method='DELETE'
+        )
         self.assert200(response,
                        'Response body is : ' + response.data.decode('utf-8'))
 
