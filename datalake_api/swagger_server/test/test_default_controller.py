@@ -289,7 +289,7 @@ class TestDefaultController(BaseTestCase):
             data=data,
             content_type='multipart/form-data'
         )
-        self.assert200WithReplaceDetails(response, valid_path, metadata_file, file)
+        self.assert200WithReplaceDetails(response, valid_path, metadata_file, random_file)
 
     #################################################################
     #UPDATE ENTRY
