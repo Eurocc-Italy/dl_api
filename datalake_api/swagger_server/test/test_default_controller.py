@@ -268,7 +268,7 @@ class TestDefaultController(BaseTestCase):
         valid_path = '/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg'
 
         # Create file-like objects using FileStorage
-        metadata_content = '{/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg }'
+        metadata_content = '{"path": "/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg"}'
         file_content = "airplane_0585.jpg "
         metadata_file = FileStorage(stream=BytesIO(metadata_content.encode()), filename='metadata.json')
         file = FileStorage(stream=BytesIO(file_content.encode()), filename='airplane_0585.jpg ')
