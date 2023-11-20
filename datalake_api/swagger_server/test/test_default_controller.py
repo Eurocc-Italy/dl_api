@@ -45,6 +45,7 @@ class TestDefaultController(BaseTestCase):
     
     def test_delete_invalid_file_path(self):
         """Test case for deleting a file with an invalid file path."""
+        print("Running test_delete_nonexistent_file")
         invalid_file_path = 'invalid/file\\path'
         response = self.client.open(
             f'/v1/delete?file_path={urllib.parse.quote(invalid_file_path)}',
