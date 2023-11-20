@@ -43,6 +43,15 @@ def escape_special_characters(content):
 
     return content
 
+#aider function for path validation
+def is_valid_file_path(path):
+    """
+    Validates the file path format.
+    Implement the logic to check if the file path is valid.
+    For example, you might want to check if it contains illegal characters, etc.
+    """
+    # Example check (you might need a more sophisticated validation based on your requirements)
+    return not any(char in path for char in ['\\', ':', '*', '?', '"', '<', '>', '|'])
 
 def delete_file(file_path):
     # Initialize MongoDB client
@@ -51,6 +60,11 @@ def delete_file(file_path):
     collection = db['metadata']
     
     try:
+
+                # Validate the file path format
+        if not is_valid_file_path(file_path):
+            return "Invalid file path format", 400
+
         # Check if the received path is an absolute path or relative to the current working directory
         if os.path.isabs(file_path):
             absolute_path = file_path
