@@ -45,7 +45,18 @@ class TestDefaultController(BaseTestCase):
         print(f"Response Body: {response.data.decode('utf-8')}")
         print("=" * 80 + "\n")
 
-
+    def assert200WithReplaceDetails(self, response, path, metadata_file, file):
+        self.assert200(response, "Expected successful response for replacement")
+        print("\n" + "=" * 80)
+        print(f"SUCCESS: Replacement for Path '{path}'")
+        print(f"Metadata File: {metadata_file.filename}")
+        print(f"File: {file.filename}")
+        print(f"Response Status: {response.status_code}")
+        response_json = json.loads(response.data.decode('utf-8'))
+        print(f"Response Body: {json.dumps(response_json, indent=4)}")
+        print("=" * 80 + "\n")
+    
+    
     ################################################################
     #DOWNLOAD
 
@@ -242,6 +253,9 @@ class TestDefaultController(BaseTestCase):
     #    # Setup and execute test for simulating an error in processing
     #    # ...
 #
+########IMPORTANT
+######## AS OF NOW NO FILE HANDLING AND CLEAN UP
+
     ## Test file handling and cleanup after processing
     #def test_query_post_file_handling_and_cleanup(self):
     #    # Setup and execute test to check file handling and cleanup
@@ -249,21 +263,31 @@ class TestDefaultController(BaseTestCase):
 #
     #################################################################
     #REPLACE ENTRY
-    def test_replace_entry(self):
-        """Test case for replace_entry
+    def test_replace_entry_successful(self):
+        """Test case for successful replacement of an entry and its file."""
+        valid_path = '/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg'
 
-        Replace an existing entry and its associated file in S3 for the given path in MongoDB
-        """
-        data = dict(metadata='metadata_example',
-                    file='file_example')
+        # Create file-like objects using FileStorage
+        metadata_content = '{/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg }'
+        file_content = "airplane_0585.jpg "
+        metadata_file = FileStorage(stream=BytesIO(metadata_content.encode()), filename='metadata.json')
+        file = FileStorage(stream=BytesIO(file_content.encode()), filename='airplane_0585.jpg ')
+
+        data = {
+            'metadata': metadata_file,
+            'file': file
+        }
+
         response = self.client.open(
-            '/v1/replace/{path}'.format(path='path_example'),
+            f'/v1/replace/{valid_path}',
             method='PUT',
             data=data,
-            content_type='multipart/form-data')
-        self.assert200(response,
-                       'Response body is : ' + response.data.decode('utf-8'))
+            content_type='multipart/form-data'
+        )
+        self.assert200WithReplaceDetails(response, valid_path, metadata_file, file)
 
+    #################################################################
+    #UPDATE ENTRY
     def test_update_entry(self):
         """Test case for update_entry
 
