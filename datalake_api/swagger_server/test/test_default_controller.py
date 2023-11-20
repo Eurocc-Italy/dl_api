@@ -291,6 +291,10 @@ class TestDefaultController(BaseTestCase):
             data=data,
             content_type='multipart/form-data'
         )
+            # Debugging output for failure
+        if response.status_code != 200:
+            print(f"Unexpected status code: {response.status_code}")
+            print(f"Response body: {response.data.decode('utf-8')}")
         self.assert200WithReplaceDetails(response, valid_path, metadata_file, file)
 
 
