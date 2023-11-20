@@ -17,9 +17,10 @@ class TestDefaultController(BaseTestCase):
 
         Delete a file in datalake (S3) and its MongoDB entry based on the given file_path
         """
-        file_path = '/home/centos/dtaas_test_api/priceDetails.png'
+        #Remember the file path below must be registered in the MongoDB, else it won't be recognized.
+        file_path = '/home/centos/dtaas_test_api/priceDetail.png'
         response = self.client.open(
-            f'/v1/delete/{file_path}',
+            f'/v1/delete?file_path=%2Fhome%2Fcentos%2Fdtaas_test_api%2FpriceDetail.png',
             method='DELETE'
         )
         self.assert200(response,
