@@ -268,7 +268,7 @@ class TestDefaultController(BaseTestCase):
         valid_path = '/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg'
 
     # Use a realistic file content for the test, like an actual image file in bytes
-        with open('airplane_0585.jpg', 'rb') as img_file:
+        with open('/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg', 'rb') as img_file:
             image_content = img_file.read()
 
         file = FileStorage(
