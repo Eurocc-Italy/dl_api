@@ -55,6 +55,40 @@ def is_valid_file_path(path):
 
 
 
+
+def download_id_get(id_):  # noqa: E501
+    """
+    Download a file
+    :param id_: File path
+    :type id_: str
+    :rtype: None
+    """
+    try:
+        # Validate the file path format
+        if not is_valid_file_path(file_path):
+            return "Invalid file path format", 400
+        
+        # Check if the received path is an absolute path or relative to the current working directory
+        if os.path.isabs(id_):
+            file_path = id_
+        else:
+            file_path = os.path.join(os.getcwd(), id_)
+
+        print(f"Debugging: Received path = {id_}")
+        print(f"Debugging: Absolute path = {file_path}")
+        print(f"Debugging: Current working directory = {os.getcwd()}")
+        
+        # Check if the file exists before attempting to send it
+        if os.path.exists(file_path):
+            return send_file(file_path, as_attachment=True), 200
+        else:
+            return "File not found", 404
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return "Internal Server Error", 500
+    
+    
 def delete_file(file_path):
     # Initialize MongoDB client
     client = MongoClient('localhost', 27017)
@@ -102,35 +136,6 @@ def delete_file(file_path):
             return "File path not found in the database", 404
     except Exception as e:
         return f"An error occurred: {str(e)}", 500
-
-
-def download_id_get(id_):  # noqa: E501
-    """
-    Download a file
-    :param id_: File path
-    :type id_: str
-    :rtype: None
-    """
-    try:
-        # Check if the received path is an absolute path or relative to the current working directory
-        if os.path.isabs(id_):
-            file_path = id_
-        else:
-            file_path = os.path.join(os.getcwd(), id_)
-
-        print(f"Debugging: Received path = {id_}")
-        print(f"Debugging: Absolute path = {file_path}")
-        print(f"Debugging: Current working directory = {os.getcwd()}")
-        
-        # Check if the file exists before attempting to send it
-        if os.path.exists(file_path):
-            return send_file(file_path, as_attachment=True), 200
-        else:
-            return "File not found", 404
-
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        return "Internal Server Error", 500
 
 
 def query_post(query_file=None, python_file=None):
