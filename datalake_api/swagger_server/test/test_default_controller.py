@@ -279,7 +279,7 @@ class TestDefaultController(BaseTestCase):
         }
 
         response = self.client.open(
-            f'/v1/replace?id=%2Fhome%2Fcentos%2Fdtaas_test_api%2FCOCO_dataset%2Fairplane_0585.jpg',
+            f'/v1/replace?path=%2Fhome%2Fcentos%2Fdtaas_test_api%2FCOCO_dataset%2Fairplane_0585.jpg',
             method='PUT',
             data=data,
             content_type='multipart/form-data'
