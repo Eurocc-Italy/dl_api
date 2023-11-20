@@ -267,15 +267,20 @@ class TestDefaultController(BaseTestCase):
         """Test case for successful replacement of an entry and its file."""
         valid_path = '/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg'
 
-        # Create file-like objects using FileStorage
+                # Create file-like objects using FileStorage
+        random_file_content= "hello"
+        random_file = FileStorage(
+            stream=BytesIO(random_file_content.encode()), 
+            filename='script.py'
+        )
+
         metadata_content = '{"path": "/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg"}'
-        file_content = "airplane_0585.jpg "
         metadata_file = FileStorage(stream=BytesIO(metadata_content.encode()), filename='metadata.json')
-        file = FileStorage(stream=BytesIO(file_content.encode()), filename='airplane_0585.jpg ')
+
 
         data = {
-            'metadata': metadata_file,
-            'file': file
+            'json_data': metadata_file,
+            'file': random_file
         }
 
         response = self.client.open(
