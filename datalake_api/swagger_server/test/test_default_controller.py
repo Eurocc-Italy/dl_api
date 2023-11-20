@@ -32,7 +32,18 @@ class TestDefaultController(BaseTestCase):
         print(f"Content-Disposition: {response.headers.get('Content-Disposition', 'N/A')}")
         print(f"Response Size: {len(response.data)} bytes")
         print("=" * 80 + "\n")
-    
+
+    def assert200WithDetailsQUERYPROCESS(self, response, query_file, python_file):
+        self.assert200(response, "Expected successful response for query and process")
+        print("\n" + "=" * 80)
+        print("SUCCESS: Query and Process Execution")
+        print(f"Query File: {query_file.filename}")
+        print(f"Python File: {python_file.filename}")
+        print(f"Response Status: {response.status_code}")
+        print(f"Response Body: {response.data.decode('utf-8')}")
+        print("=" * 80 + "\n")
+
+
     ################################################################
     #DOWNLOAD
 
@@ -63,7 +74,45 @@ class TestDefaultController(BaseTestCase):
             )
         self.assertEqual(response.status_code, 400, "Expected 400 for invalid file path")
 
+# Test for downloading with an empty or missing file path
+# Expectation: Should return a 400 Bad Request or a custom error response.
+#def test_download_empty_file_path(self):
+    # Test implementation...
 
+# Test for path traversal attack vulnerability
+# Expectation: Should prevent accessing unauthorized files and return a 400 or 403 response.
+#def test_download_path_traversal_attack(self):
+    # Test implementation...
+
+# Test for handling URL-encoded file paths
+# Expectation: Should decode the path correctly and download successfully if the file exists.
+#def test_download_url_encoded_path(self):
+    # Test implementation...
+
+# Test for downloading files with special characters in the path
+# Expectation: Should handle special characters correctly and download successfully if the file exists.
+#def test_download_special_characters_in_path(self):
+    # Test implementation...
+
+# Test for downloading files from subdirectories
+# Expectation: Should navigate subdirectories correctly and download successfully if the file exists.
+#def test_download_file_from_subdirectories(self):
+    # Test implementation...
+
+# Test for downloading large files
+# Expectation: Should handle large data transfers efficiently without timeout or memory issues.
+#def test_download_large_file(self):
+    # Test implementation...
+
+# Test for handling multiple concurrent download requests
+# Expectation: Should allow simultaneous downloads efficiently.
+#def test_concurrent_downloads(self):
+    # Test implementation...
+
+# Test for downloading files with permission issues
+# Expectation: Should respond with a 403 Forbidden or a custom error message if server lacks read permissions.
+#def test_download_file_with_permission_issues(self):
+    # Test implementation...
 
 
 
@@ -135,21 +184,38 @@ class TestDefaultController(BaseTestCase):
 
 
 
-    def test_query_post(self):
-        """Test case for query_post
+    ################################################################
+    #Query_and_Process
 
-        Query (sql in .txt) and Manipulate (file.py) datalake items
-        """
-        data = dict(query_file='query_file_example',
-                    python_file='python_file_example')
-        response = self.client.open(
-            '/v1/query_and_process',
-            method='POST',
-            data=data,
-            content_type='multipart/form-data')
-        self.assert200(response,
-                       'Response body is : ' + response.data.decode('utf-8'))
 
+def test_query_post_successful_execution(self):
+    """Test case for successful query and process execution."""
+    # Simulate a query file and a Python file
+    query_file_content = "SELECT * FROM your_table;"  # Example SQL query
+    python_file_content = "print('Hello, world!')"    # Example Python script
+
+    # Create file-like objects for both files
+    query_file = (BytesIO(query_file_content.encode()), 'query.txt')
+    python_file = (BytesIO(python_file_content.encode()), 'script.py')
+
+    # Prepare the data dictionary
+    data = {
+        'query_file': query_file,
+        'python_file': python_file
+    }
+
+    response = self.client.open(
+        '/v1/query_and_process',
+        method='POST',
+        data=data,
+        content_type='multipart/form-data'
+    )
+    self.assert200WithDetailsQUERYPROCESS(response, query_file, python_file)
+
+
+
+    ################################################################
+    #REPLACE ENTRY
     def test_replace_entry(self):
         """Test case for replace_entry
 

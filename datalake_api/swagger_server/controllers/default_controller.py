@@ -64,16 +64,16 @@ def download_id_get(id_):  # noqa: E501
     :rtype: None
     """
     try:
- 
+        # Validate the file path format
+        if not is_valid_file_path(id_):
+            return "Invalid file path format", 400
         # Check if the received path is an absolute path or relative to the current working directory
         if os.path.isabs(id_):
             file_path = id_
         else:
             file_path = os.path.join(os.getcwd(), id_)
 
-               # Validate the file path format
-        if not is_valid_file_path(file_path):
-            return "Invalid file path format", 400
+
         
 
         print(f"Debugging: Received path = {id_}")
