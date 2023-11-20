@@ -28,6 +28,7 @@ class TestDefaultController(BaseTestCase):
         """
         # !!! Remember the file path below must be registered in the MongoDB, else it won't be recognized !!!
         # The file path below is hardcoded in the test within the response 
+        print("ciao bello")
         file_path = '/home/centos/dtaas_test_api/priceDetail.png'
         response = self.client.open(
             f'/v1/delete?file_path=%2Fhome%2Fcentos%2Fdtaas_test_api%2FpriceDetail.png',
@@ -37,6 +38,7 @@ class TestDefaultController(BaseTestCase):
 
     def test_delete_nonexistent_file(self):
         """Test case for attempting to delete a nonexistent file."""
+        print("Running test_delete_nonexistent_file")
         response = self.client.open(
             f'/v1/delete?file_path={urllib.parse.quote("/path/to/nonexistentfile")}',
             method='DELETE'
@@ -45,7 +47,7 @@ class TestDefaultController(BaseTestCase):
     
     def test_delete_invalid_file_path(self):
         """Test case for deleting a file with an invalid file path."""
-        print("Running test_delete_nonexistent_file")
+        print("Running test_delete_invalid_file")
         invalid_file_path = 'invalid/file\\path'
         response = self.client.open(
             f'/v1/delete?file_path={urllib.parse.quote(invalid_file_path)}',
