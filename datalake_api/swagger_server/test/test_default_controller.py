@@ -38,9 +38,9 @@ class TestDefaultController(BaseTestCase):
 
     def test_download_successful(self):
      """Test case for successfully downloading an item from the datalake."""
-     existing_file_id = 'path/to/existing/file'  # Replace with a valid file path
+     existing_file_id = '/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg' 
      response = self.client.open(
-          f'/v1/download/{existing_file_id}',
+          f'/v1/download?id=%2Fhome%2Fcentos%2Fdtaas_test_api%2FCOCO_dataset%2Fairplane_0585.jpg',
           method='GET'
      )
      self.assert200WithDetailsDOWNLOAD(response, existing_file_id)
