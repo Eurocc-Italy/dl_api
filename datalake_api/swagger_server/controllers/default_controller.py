@@ -274,6 +274,9 @@ def update_entry(path, file=None):  # noqa: E501
     client = MongoClient('localhost', 27017)
     db = client['datalake']
     collection = db['metadata']
+
+    # Initialize the file_replacement flag
+    file_replacement = False
     
     # Specify local folder for file storage
     local_folder = "/home/centos/dtaas_test_api/COCO_dataset"
