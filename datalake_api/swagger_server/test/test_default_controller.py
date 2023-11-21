@@ -349,7 +349,7 @@ class TestDefaultController(BaseTestCase):
     #UPDATE ENTRY
     def test_update_entry(self):
         """Test case for update_entry - Update an entry in MongoDB."""
-        valid_path = '/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg'  # Adjust to match a real path
+        valid_path = '/home/centos/dtaas_test_api/priceDetail.png'  # Adjust to match a real path
 
         # Reading the JSON metadata from a file
         ##At the moment this is the same file as for the replace, we effectively won't see a change
@@ -385,7 +385,7 @@ class TestDefaultController(BaseTestCase):
     #UPLOAD 
     def test_upload_post(self):
         """Test case for upload_post - Upload files to datalake and add entries to MongoDB."""
-        # Prepare a realistic file content for the test
+
         with open('/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg', 'rb') as img_file:
             image_content = img_file.read()
 
