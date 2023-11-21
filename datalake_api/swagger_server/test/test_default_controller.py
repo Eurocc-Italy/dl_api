@@ -322,6 +322,12 @@ class TestDefaultController(BaseTestCase):
             content_type='application/json'
         )
 
+            # Confirm the file object before sending
+        if not metadata_file or not hasattr(metadata_file, 'read'):
+            print("Error: metadata_file is not a valid FileStorage object.")
+            return
+
+
         data = {
             'file': file,
             'json_data': metadata_file
@@ -367,7 +373,7 @@ class TestDefaultController(BaseTestCase):
         response = self.client.open(
             f'/v1/update?path={urllib.parse.quote(valid_path)}',  # Adjusting path parameter
             method='PATCH',
-            data=metadata_file,
+            data=data,
             content_type='multipart/form-data'  
         )
 
