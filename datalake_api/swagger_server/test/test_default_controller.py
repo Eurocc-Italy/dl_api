@@ -45,7 +45,7 @@ class TestDefaultController(BaseTestCase):
         print(f"Response Body: {response.data.decode('utf-8')}")
         print("=" * 80 + "\n")
 
-    def assert200WithReplaceDetails(self, response, path, metadata_file, file):
+    def assert200WithDetailsREPLACE(self, response, path, metadata_file, file):
         self.assert200(response, "Expected successful response for replacement")
         print("\n" + "=" * 80)
         print(f"SUCCESS: Replacement for Path '{path}'")
@@ -56,7 +56,42 @@ class TestDefaultController(BaseTestCase):
         print(f"Response Body: {json.dumps(response_json, indent=4)}")
         print("=" * 80 + "\n")
     
-    
+    def assert200WithDetailsUPDATE(self, response, path, metadata_file):
+        """Custom assert method for detailed test responses."""
+        try:
+            self.assertEqual(response.status_code, 200, "Expected status code 200")
+            print("\n" + "=" * 80)
+            print(f"SUCCESS: Update entry for path {path}")
+            print(f"Metadata File: {metadata_file.filename}")
+            print(f"Response Status: {response.status_code}")
+            print(f"Response Body: {response.data.decode('utf-8')}")
+            print("=" * 80 + "\n")
+        except AssertionError as e:
+            print("\n" + "=" * 80)
+            print("FAILED: Update entry test")
+            print(f"Response Status: {response.status_code}")
+            print(f"Response Body: {response.data.decode('utf-8')}")
+            print("=" * 80 + "\n")
+            raise e
+ 
+    def assert200WithDetailsUPLOAD(self, response, file, metadata_file):
+        """Custom assert method for detailed test responses."""
+        try:
+            self.assertEqual(response.status_code, 201, "Expected status code 201")
+            print("\n" + "=" * 80)
+            print("SUCCESS: File and Metadata Upload")
+            print(f"File Name: {file.filename}")
+            print(f"Metadata File: {metadata_file.filename}")
+            print(f"Response Status: {response.status_code}")
+            print(f"Response Body: {response.data.decode('utf-8')}")
+            print("=" * 80 + "\n")
+        except AssertionError as e:
+            print("\n" + "=" * 80)
+            print("FAILED: Upload Test")
+            print(f"Response Status: {response.status_code}")
+            print(f"Response Body: {response.data.decode('utf-8')}")
+            print("=" * 80 + "\n")
+            raise e
     ################################################################
     #DOWNLOAD
 
@@ -304,43 +339,79 @@ class TestDefaultController(BaseTestCase):
             print(f"Unexpected status code: {response.status_code}")
             print(f"Response body: {response.data.decode('utf-8')}")
 
-        self.assert200WithReplaceDetails(response, valid_path, metadata_file, file)
+        self.assert200WithDetailsREPLACE(response, valid_path, metadata_file, file)
 
 
 
     #################################################################
     #UPDATE ENTRY
     def test_update_entry(self):
-        """Test case for update_entry
+        """Test case for update_entry - Update an entry in MongoDB."""
+        valid_path = '/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg'  # Adjust to match a real path
 
-        Update an entry and optionally the file for the given path in MongoDB
-        """
-        body = UpdatePathBody()
+        # Reading the JSON metadata from a file
+        ##At the moment this is the same file as for the replace, we effectively won't see a change
+        with open('/home/centos/dtaas_test_api/single_entry_metadata_test.json', 'r') as json_file:
+            metadata_content = json_file.read()
+
+        metadata_file = FileStorage(
+            stream=BytesIO(metadata_content.encode()),
+            filename='metadata.json',
+            content_type='application/json'
+        )
+
+        data = {
+            'file': metadata_file
+        }
+
         response = self.client.open(
-            '/v1/update/{path}'.format(path='path_example'),
+            f'/v1/update?path={urllib.parse.quote(valid_path)}',  # Adjusting path parameter
             method='PATCH',
-            data=json.dumps(body),
-            content_type='application/json')
-        self.assert200(response,
-                       'Response body is : ' + response.data.decode('utf-8'))
-        
+            data=data,
+            content_type='multipart/form-data'  # If binary file is expected
+        )
+
+        self.assert200WithDetailsUPDATE(response, valid_path, metadata_file)
+
+
 
     #################################################################
     #UPLOAD 
     def test_upload_post(self):
-        """Test case for upload_post
+        """Test case for upload_post - Upload files to datalake and add entries to MongoDB."""
+        # Prepare a realistic file content for the test
+        with open('/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg', 'rb') as img_file:
+            image_content = img_file.read()
 
-        --Upload files to datalake (S3) and add entries to MongoDB-- OR --Replace Files in datalake(S3) and keep correspondig MongoDB entry-- Two options avoid creation of duplicate entries in MongoDB
-        """
-        data = dict(file='file_example',
-                    json_data='json_data_example')
+        file = FileStorage(
+            stream=BytesIO(image_content),
+            filename='test_file.jpg',
+            content_type='application/octet-stream'  
+        )
+
+        # Reading the JSON metadata from a file
+        with open('/home/centos/dtaas_test_api/single_entry_metadata_test.json', 'r') as json_file:
+            metadata_content = json_file.read()
+
+        metadata_file = FileStorage(
+            stream=BytesIO(metadata_content.encode()),
+            filename='metadata.json',
+            content_type='application/json'
+        )
+
+        data = {
+            'file': file,
+            'json_data': metadata_file
+        }
+
         response = self.client.open(
             '/v1/upload',
             method='POST',
             data=data,
-            content_type='multipart/form-data')
-        self.assert200(response,
-                       'Response body is : ' + response.data.decode('utf-8'))
+            content_type='multipart/form-data'
+        )
+        self.assert200WithDetailsUPLOAD(response, file, metadata_file)
+
 
 
 if __name__ == '__main__':
