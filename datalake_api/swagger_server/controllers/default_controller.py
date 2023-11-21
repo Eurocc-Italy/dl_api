@@ -274,10 +274,7 @@ def update_entry(path, file=None):  # noqa: E501
     client = MongoClient('localhost', 27017)
     db = client['datalake']
     collection = db['metadata']
-
-    # Initialize the file_replacement flag
-    file_replacement = False
-
+    
     # Specify local folder for file storage
     local_folder = "/home/centos/dtaas_test_api/COCO_dataset"
 
@@ -300,20 +297,30 @@ def update_entry(path, file=None):  # noqa: E501
         if not existing_entry:
             return "Entry not found for the given path", 404
 
-        if file and hasattr(file, 'read'):
-            json_data_str = file.read().decode('utf-8')
-            json_data = json.loads(json_data_str)
-            # Update the single entry
-            if collection.find_one_and_update({'path': absolute_path}, {'$set': json_data}):
-                print(f"Metadata updated for path= {absolute_path}")
-                file_replacement = True
+        # Step 2: Insert json_data into MongoDB
+        # Properly read json_data and insert it into MongoDB
+        json_data_str = file.read().decode('utf-8')
+        json_data_list = json.loads(json_data_str)
 
-            return "Metadata is Updated Successfully", 200
+        paths_to_check = [doc.get('path', '') for doc in json_data_list]
+        existing_entry = collection.find_one({'path': {'$in': paths_to_check}})
+
+        if existing_entry:
+            for doc in json_data_list:
+                if collection.find_one_and_update({'path': doc.get('path')}, {'$set': doc} ):
+                    print(f"Metadata updated,for path= {doc['path']}")
+                    json_data_list.remove(doc)
+                    file_replacement = True
+
+        # Step 3: Success message
+        if file_replacement:
+            return "Metadata is Updated Succesfully", 201
         else:
-            return "File parameter is invalid or missing", 400
+            return "Metadata not replaced ", 400
 
     except Exception as e:
         return f"An error occurred: {str(e)}", 500
+
 
 
 
