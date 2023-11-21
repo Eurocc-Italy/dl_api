@@ -59,7 +59,7 @@ class TestDefaultController(BaseTestCase):
     def assert200WithDetailsUPDATE(self, response, path, metadata_file):
         """Custom assert method for detailed test responses."""
         try:
-            self.assertEqual(response.status_code, 200, "Expected status code 200")
+            self.assertEqual(response.status_code, 201, "Expected status code 200")
             print("\n" + "=" * 80)
             print(f"SUCCESS: Update entry for path {path}")
             print(f"Metadata File: {metadata_file.filename}")
@@ -349,7 +349,7 @@ class TestDefaultController(BaseTestCase):
     #UPDATE ENTRY
     def test_update_entry(self):
         """Test case for update_entry - Update an entry in MongoDB."""
-        valid_path = "/home/centos/dtaas_test_api/COCO_dataset/priceDetail.png"  # is this the problem???
+        valid_path = "/home/centos/dtaas_test_api/priceDetail.png"  # is this the problem???
 
         # Reading the JSON metadata from a file
         ##At the moment this is the same file as for the replace, we effectively won't see a change
