@@ -243,7 +243,7 @@ def replace_entry(path, file=None ,json_data=None):  # noqa: E501###
 
         if existing_entry:
             for doc in json_data_list:
-                if collection.find_one_and_update({'path': doc.get('path')}, {'$set': doc} ):
+                if collection.find_one_and_replace({'path': doc.get('path')}, {'$set': doc} ):
                     print(f"Metadata updated,for path= {doc['path']}")
                     json_data_list.remove(doc)
         
@@ -277,7 +277,7 @@ def update_entry(path, file=None):  # noqa: E501
 
     # Initialize the file_replacement flag
     file_replacement = False
-    
+
     # Specify local folder for file storage
     local_folder = "/home/centos/dtaas_test_api/COCO_dataset"
 
