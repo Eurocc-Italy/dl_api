@@ -351,13 +351,13 @@ class TestDefaultController(BaseTestCase):
 
         # Reading the JSON metadata from a file
         ##At the moment this is the same file as for the replace, we effectively won't see a change
-        with open('/home/centos/dtaas_test_api/single_entry_metadata_test.json', 'r') as json_file:
+        with open('/home/centos/dtaas_test_api/SINGLE_cat_entry_metadata_test.json', 'r') as json_file:
             metadata_content = json_file.read()
 
         metadata_file = FileStorage(
             stream=BytesIO(metadata_content.encode()),
             filename='metadata.json',
-            content_type='application/json'
+            content_type='application/octet-stream'
         )
 
         data = {
