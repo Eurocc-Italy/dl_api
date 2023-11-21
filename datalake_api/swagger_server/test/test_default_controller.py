@@ -351,13 +351,13 @@ class TestDefaultController(BaseTestCase):
 
         # Reading the JSON metadata from a file
         ##At the moment this is the same file as for the replace, we effectively won't see a change
-        with open('/home/centos/dtaas_test_api/SINGLE_cat_entry_metadata_test.json', 'r') as json_file:
+        with open('/home/centos/dtaas_test_api/single_entry_metadata_test.json', 'r') as json_file:
             metadata_content = json_file.read()
 
         metadata_file = FileStorage(
             stream=BytesIO(metadata_content.encode()),
             filename='metadata.json',
-            content_type='application/octet-stream'
+            content_type='application/json'
         )
 
         data = {
@@ -365,10 +365,10 @@ class TestDefaultController(BaseTestCase):
         }
 
         response = self.client.open(
-            f'/v1/update?path={urllib.parse.quote(valid_path)}',  # Adjusting path parameter
+            f'/v1/update?path=%2Fhome%2Fcentos%2Fdtaas_test_api%2FCOCO_dataset%2Fairplane_0585.jpg',  # Adjusting path parameter
             method='PATCH',
             data=data,
-            content_type='multipart/form-data'  # If binary file is expected
+            content_type='multipart/form-data'  
         )
 
         self.assert200WithDetailsUPDATE(response, valid_path, metadata_file)
