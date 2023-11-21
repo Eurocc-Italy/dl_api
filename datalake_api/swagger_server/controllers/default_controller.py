@@ -303,6 +303,7 @@ def update_entry(path, file=None):  # noqa: E501
         if file and hasattr(file, 'read'):
             json_data_str = file.read().decode('utf-8')
             json_data = json.loads(json_data_str)
+            # Update the single entry
             if collection.find_one_and_update({'path': absolute_path}, {'$set': json_data}):
                 print(f"Metadata updated for path= {absolute_path}")
                 file_replacement = True
@@ -313,6 +314,7 @@ def update_entry(path, file=None):  # noqa: E501
 
     except Exception as e:
         return f"An error occurred: {str(e)}", 500
+
 
 
 
