@@ -314,7 +314,10 @@ class TestDefaultController(BaseTestCase):
             content_type='application/json')
         self.assert200(response,
                        'Response body is : ' + response.data.decode('utf-8'))
+        
 
+    #################################################################
+    #UPLOAD 
     def test_upload_post(self):
         """Test case for upload_post
 
