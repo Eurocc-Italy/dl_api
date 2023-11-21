@@ -349,7 +349,7 @@ class TestDefaultController(BaseTestCase):
     #UPDATE ENTRY
     def test_update_entry(self):
         """Test case for update_entry - Update an entry in MongoDB."""
-        valid_path = '/home/centos/dtaas_test_api/priceDetail.png'  # Adjust to match a real path
+        valid_path = "/home/centos/dtaas_test_api/priceDetail.png"  # is this the problem???
 
         # Reading the JSON metadata from a file
         ##At the moment this is the same file as for the replace, we effectively won't see a change
