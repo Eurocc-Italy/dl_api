@@ -365,9 +365,9 @@ class TestDefaultController(BaseTestCase):
         }
 
         response = self.client.open(
-            f'/v1/update?path=%2Fhome%2Fcentos%2Fdtaas_test_api%2FCOCO_dataset%2Fairplane_0585.jpg',  # Adjusting path parameter
+            f'/v1/update?path={urllib.parse.quote(valid_path)}',  # Adjusting path parameter
             method='PATCH',
-            data=data,
+            data=metadata_file,
             content_type='multipart/form-data'  
         )
 
