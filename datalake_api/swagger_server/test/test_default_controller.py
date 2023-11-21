@@ -322,10 +322,6 @@ class TestDefaultController(BaseTestCase):
             content_type='application/json'
         )
 
-            # Confirm the file object before sending
-        if not metadata_file or not hasattr(metadata_file, 'read'):
-            print("Error: metadata_file is not a valid FileStorage object.")
-            return
 
 
         data = {
@@ -366,6 +362,10 @@ class TestDefaultController(BaseTestCase):
             content_type='application/json'
         )
 
+            # Confirm the file object before sending
+        if not metadata_file or not hasattr(metadata_file, 'read'):
+            print("Error: metadata_file is not a valid FileStorage object.")
+            return
         data = {
             'file': metadata_file
         }
