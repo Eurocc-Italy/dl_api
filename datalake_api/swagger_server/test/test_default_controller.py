@@ -6,7 +6,7 @@ from flask import json
 from six import BytesIO
 
 from werkzeug.datastructures import FileStorage
-
+import os
 from swagger_server.models.update_path_body import UpdatePathBody  # noqa: E501
 from swagger_server.test import BaseTestCase
 import urllib.parse
@@ -267,18 +267,25 @@ class TestDefaultController(BaseTestCase):
         """Test case for successful replacement of an entry and its file."""
         valid_path = '/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg'
 
-    # Use a realistic file content for the test, like an actual image file in bytes
-        with open('/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg', 'rb') as img_file:
-            image_content = img_file.read()
+        # Reading the file as a generic binary string
+        with open(valid_path, 'rb') as file_obj:
+            file_content = file_obj.read()
 
         file = FileStorage(
-            stream=BytesIO(image_content),
-            filename='airplane_0585.jpg',
-            content_type='application/octet-stream'
+            stream=BytesIO(file_content),
+            filename=os.path.basename(valid_path),
+            content_type='application/octet-stream'  # General binary content type
         )
 
-        metadata_content = '{"id": 32,"path": "/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg"}'  # Ensure this is correctly formatted
-        metadata_file = FileStorage(stream=BytesIO(metadata_content.encode()), filename='metadata.json')
+        # Reading the JSON metadata from a file
+        with open('/home/centos/dtaas_test_api/single_entry_metadata_test.json', 'r') as json_file:
+            metadata_content = json_file.read()
+
+        metadata_file = FileStorage(
+            stream=BytesIO(metadata_content.encode()),
+            filename='metadata.json',
+            content_type='application/json'
+        )
 
         data = {
             'file': file,
@@ -286,15 +293,17 @@ class TestDefaultController(BaseTestCase):
         }
 
         response = self.client.open(
-            f'/v1/replace?path=%2Fhome%2Fcentos%2Fdtaas_test_api%2FCOCO_dataset%2Fairplane_0585.jpg',  # Use path parameter
+            f'/v1/replace?path={urllib.parse.quote(valid_path)}',
             method='PUT',
             data=data,
             content_type='multipart/form-data'
         )
-            # Debugging output for failure
+
+        # Debugging output for failure
         if response.status_code != 200:
             print(f"Unexpected status code: {response.status_code}")
             print(f"Response body: {response.data.decode('utf-8')}")
+
         self.assert200WithReplaceDetails(response, valid_path, metadata_file, file)
 
 
