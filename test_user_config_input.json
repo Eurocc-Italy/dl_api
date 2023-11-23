@@ -1,0 +1,26 @@
+{
+    "sql_query": "SELECT * FROM metadata WHERE condition = 'value'",
+    "script_path": "/path/to/analysis_script.py",
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "config_client": {
+      "user": "db_user",
+      "password": "db_password",
+      "ip": "192.168.1.1",
+      "port": "27017",
+      "database": "metadata_db",
+      "collection": "metadata_collection"
+    },
+    "config_server": {
+      "user": "hpc_user",
+      "host": "hpc.example.com",
+      "venv_path": "/path/to/venv",
+      "ssh_key": "/path/to/ssh_key",
+      "partition": "compute",
+      "account": "hpc_account",
+      "mail": "user@example.com",
+      "walltime": "2:00:00",
+      "nodes": 2,
+      "ntasks_per_node": 4
+    }
+  }
+  
