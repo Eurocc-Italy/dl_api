@@ -7,3 +7,4 @@ pymongo == 4.5.0
 sh
 pyparsingl
 sqlparse
+python_decouple

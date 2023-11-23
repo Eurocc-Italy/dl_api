@@ -19,6 +19,7 @@ from swagger_server import util
 import uuid
 import logging
 
+from decouple import config
 import subprocess
 from tempfile import mkdtemp
 #from sh import pushd  # Import pushd from the sh library
@@ -92,10 +93,16 @@ def download_id_get(id_):  # noqa: E501
     
 
 def delete_file(file_path):
-    # Initialize MongoDB client
-    client = MongoClient('localhost', 27017)
-    db = client['datalake']
-    collection = db['metadata']
+    # Initialize MongoDB client with decouple
+    mongo_host = config('MONGO_HOST', default='localhost')
+    mongo_port = config('MONGO_PORT', default=27017, cast=int)
+    mongo_db_name = config('MONGO_DB_NAME', default='datalake')
+    mongo_collection_name = config('MONGO_COLLECTION_NAME', default='metadata')
+
+    client = MongoClient(mongo_host, mongo_port)
+    db = client[mongo_db_name]
+    collection = db[mongo_collection_name]
+
     
     try:
 
@@ -210,12 +217,17 @@ def replace_entry(path, file=None ,json_data=None):  # noqa: E501###
         # Capture metadata and file from request
 
        # Initialize MongoDB client
-    client = MongoClient('localhost', 27017)
-    db = client['datalake']
-    collection = db['metadata']
+    mongo_host = config('MONGO_HOST', default='localhost')
+    mongo_port = config('MONGO_PORT', default=27017, cast=int)
+    mongo_db_name = config('MONGO_DB_NAME', default='datalake')
+    mongo_collection_name = config('MONGO_COLLECTION_NAME', default='metadata')
+
+    client = MongoClient(mongo_host, mongo_port)
+    db = client[mongo_db_name]
+    collection = db[mongo_collection_name]
 
     # Specify the local folder for file storage
-    local_folder = "/home/centos/dtaas_test_api/COCO_dataset"
+    local_folder = config('LOCAL_FOLDER', default='/home/centos/dtaas_test_api/COCO_dataset')
 
     try:
         # Check if the received path is an absolute path or relative to the current working directory
@@ -279,15 +291,20 @@ def update_entry(path, file=None):  # noqa: E501
     print(f"Debug: Received body = {file}")
 
     # Initialize MongoDB client
-    client = MongoClient('localhost', 27017)
-    db = client['datalake']
-    collection = db['metadata']
+    mongo_host = config('MONGO_HOST', default='localhost')
+    mongo_port = config('MONGO_PORT', default=27017, cast=int)
+    mongo_db_name = config('MONGO_DB_NAME', default='datalake')
+    mongo_collection_name = config('MONGO_COLLECTION_NAME', default='metadata')
+
+    client = MongoClient(mongo_host, mongo_port)
+    db = client[mongo_db_name]
+    collection = db[mongo_collection_name]
 
     # Initialize the file_replacement flag
     file_replacement = False
     
     # Specify local folder for file storage
-    local_folder = "/home/centos/dtaas_test_api/COCO_dataset"
+    local_folder = config('LOCAL_FOLDER', default='/home/centos/dtaas_test_api/COCO_dataset')
 
     try:
         # Determine absolute path
@@ -338,9 +355,14 @@ def update_entry(path, file=None):  # noqa: E501
 
 def upload_post(file, json_data):
     # Initialize MongoDB client
-    client = MongoClient('localhost', 27017)
-    db = client['datalake']
-    collection = db['metadata']
+    mongo_host = config('MONGO_HOST', default='localhost')
+    mongo_port = config('MONGO_PORT', default=27017, cast=int)
+    mongo_db_name = config('MONGO_DB_NAME', default='datalake')
+    mongo_collection_name = config('MONGO_COLLECTION_NAME', default='metadata')
+
+    client = MongoClient(mongo_host, mongo_port)
+    db = client[mongo_db_name]
+    collection = db[mongo_collection_name]
     
     # Initialize transactional behavior flag
     success = False
@@ -350,7 +372,7 @@ def upload_post(file, json_data):
     
     try:
         # Step 1: Save File --> THIS WILL THEN BE THE PATH/URL for S3*****************************************
-        file_path = "/home/centos/dtaas_test_api/COCO_dataset"
+        file_path = config('LOCAL_FOLDER', default='/home/centos/dtaas_test_api/COCO_dataset')
         with open(os.path.join(file_path, file.filename), 'wb') as f:
             f.write(file.read())
         
