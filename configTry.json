@@ -1,8 +1,4 @@
-{
-    "sql_query": "SELECT * FROM metadata WHERE condition = 'value'",
-    "script_path": "/path/to/analysis_script.py",
-    "id": "123e4567-e89b-12d3-a456-426614174000",
-    "config_client": {
+{    "config_client": {
       "user": "db_user",
       "password": "db_password",
       "ip": "192.168.1.1",

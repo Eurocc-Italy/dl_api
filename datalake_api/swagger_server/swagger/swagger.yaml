@@ -230,7 +230,6 @@ components:
     query_and_process_body:
       required:
         - query_file
-        - python_file
       type: object
       properties:
         query_file:
@@ -241,7 +240,7 @@ components:
           format: binary
         config_json:
           type: string
-          format: json
+          format: binary
 
     upload_body:
       required:
