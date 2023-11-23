@@ -273,7 +273,7 @@ class TestDefaultController(BaseTestCase):
             data=data,
             content_type='multipart/form-data'
         )
-        self.assert200WithDetailsQUERYPROCESS(response, query_file, python_file)
+        self.assert200WithDetailsQUERYPROCESS(response, query_file, python_file,config_json)
 
     # Test for successful query and process execution
     #def test_query_post_successful_execution(self):
