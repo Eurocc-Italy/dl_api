@@ -120,7 +120,7 @@ paths:
                   type: string
                   x-content-type: text/plain
         x-openapi-router-controller: swagger_server.controllers.default_controller
-  
+
   /delete:
     delete:
       summary: Delete a file in datalake (S3) and its MongoDB entry based on the given
@@ -229,8 +229,8 @@ components:
           description: Width of the image in pixels.
     query_and_process_body:
       required:
-      - query_file
-      - python_file
+        - query_file
+        - python_file
       type: object
       properties:
         query_file:
@@ -239,6 +239,10 @@ components:
         python_file:
           type: string
           format: binary
+        config_json:
+          type: string
+          format: json
+
     upload_body:
       required:
       - file
