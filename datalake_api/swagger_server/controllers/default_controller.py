@@ -139,12 +139,17 @@ def delete_file(file_path):
     except Exception as e:
         return f"An error occurred: {str(e)}", 500
 
-
-def query_post(query_file=None, python_file=None):
+#INCLUDE A JSON PARAMETER, CONFIG FILE, WHERE IT HAS config_server = True/False and Config_client= True/False
+def query_post(query_file=None, python_file=None, config_json=None):
     try:
-        # Ensure the query file is provided
+        # Ensure the query file and config JSON are provided
         if not query_file:
-            return "Missing query file", 400
+            return "Missing query file or configuration", 400
+
+        # Parse the configuration JSON
+        config = json.loads(config_json.read().decode('utf-8'))
+        config_server = config.get("config_server")  # Retrieve entire object or None
+        config_client = config.get("config_client")  # Retrieve entire object or None
 
         # Generate a unique ID and create a temporary directory
         unique_id = str(uuid.uuid4())
@@ -153,17 +158,20 @@ def query_post(query_file=None, python_file=None):
         # Read and store sql_query.txt
         query_content = query_file.read().decode('utf-8')
 
-        # Save script.py in the temporary directory
+        # Save script.py in the temporary directory if provided
         script_filename = f"user_script_{unique_id}.py"
         script_path = os.path.join(tdir, script_filename)
-        with open(script_path, 'w') as script_out:
-            script_out.write(python_file.read().decode('utf-8'))
+        if python_file:
+            with open(script_path, 'w') as script_out:
+                script_out.write(python_file.read().decode('utf-8'))
 
         # Prepare and save launch.json in the temporary directory
         launch_data = {
             "sql_query": query_content,
             "script_path": script_path,
-            "ID": unique_id
+            "ID": unique_id,
+            "config_client": config_client or {},  # Insert empty dict if None
+            "config_server": config_server or {}   # Insert empty dict if None
         }
         launch_path = os.path.join(tdir, 'launch.json')
         with open(launch_path, 'w') as launch_out:

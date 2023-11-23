@@ -102,23 +102,25 @@ paths:
           description: Not Found
       x-openapi-router-controller: swagger_server.controllers.default_controller
   /query_and_process:
-    post:
-      summary: Query (sql in .txt) and Manipulate (file.py) datalake items
-      operationId: query_post
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/query_and_process_body'
-      responses:
-        "200":
-          description: Query and Manipulate Successful
+      post:
+        summary: Query (sql in .txt) and Manipulate (file.py) datalake items, with optional server and client configurations
+        operationId: query_post
+        requestBody:
+          required: true
           content:
-            text/plain:
+            multipart/form-data:
               schema:
-                type: string
-                x-content-type: text/plain
-      x-openapi-router-controller: swagger_server.controllers.default_controller
+                $ref: '#/components/schemas/query_and_process_body'
+        responses:
+          "200":
+            description: Query and Manipulate Successful
+            content:
+              text/plain:
+                schema:
+                  type: string
+                  x-content-type: text/plain
+        x-openapi-router-controller: swagger_server.controllers.default_controller
+  
   /delete:
     delete:
       summary: Delete a file in datalake (S3) and its MongoDB entry based on the given
