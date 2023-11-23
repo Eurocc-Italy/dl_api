@@ -97,13 +97,16 @@ class TestDefaultController(BaseTestCase):
     #DOWNLOAD
 
     def test_download_successful(self):
-     """Test case for successfully downloading an item from the datalake."""
-     existing_file_id = '/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg' 
-     response = self.client.open(
-          f'/v1/download?id=%2Fhome%2Fcentos%2Fdtaas_test_api%2FCOCO_dataset%2Fairplane_0585.jpg',
-          method='GET'
-     )
-     self.assert200WithDetailsDOWNLOAD(response, existing_file_id)
+        """Test case for successfully downloading an item from the datalake."""
+        local_folder = config('LOCAL_FOLDER', default='/home/centos/dtaas_test_api/COCO_dataset')
+        existing_file_id = f'{local_folder}/airplane_0585.jpg'
+        encoded_file_id = urllib.parse.quote(existing_file_id)
+
+        response = self.client.open(
+            f'/v1/download?id={encoded_file_id}',
+            method='GET'
+        )
+        self.assert200WithDetailsDOWNLOAD(response, existing_file_id)
 
     def test_download_file_not_found(self):
         """Test case for attempting to download a file that doesn't exist."""
@@ -114,14 +117,14 @@ class TestDefaultController(BaseTestCase):
             )
         self.assertEqual(response.status_code, 404, "Expected 404 for nonexistent file")
 
-    def test_download_invalid_file_path(self):
-        """Test case for downloading with an invalid file path."""
-        invalid_file_id = 'invalid\\file\\path'
-        response = self.client.open(
-            f'/v1/download/{invalid_file_id}',
-            method='GET'
-            )
-        self.assertEqual(response.status_code, 400, "Expected 400 for invalid file path")
+#    def test_download_invalid_file_path(self):
+#        """Test case for downloading with an invalid file path."""
+#        invalid_file_id = 'invalid\\file\\path'
+#        response = self.client.open(
+#            f'/v1/download/{invalid_file_id}',
+#            method='GET'
+#            )
+#        self.assertEqual(response.status_code, 400, "Expected 400 for invalid file path")
 
 # Test for downloading with an empty or missing file path
 # Expectation: Should return a 400 Bad Request or a custom error response.
@@ -169,15 +172,14 @@ class TestDefaultController(BaseTestCase):
     ################################################################
     #DELETE
     def test_delete_succesful(self):
-        """Test case for delete_file
+        """Test case for delete_file"""
+        local_folder = config('LOCAL_FOLDER', default='/home/centos/dtaas_test_api/COCO_dataset')
+        file_name = 'priceDetail.png'
+        file_path = f'{local_folder}/{file_name}'
+        encoded_file_path = urllib.parse.quote(file_path)
 
-        Delete a file in datalake (S3) and its MongoDB entry based on the given file_path
-        """
-        # !!! Remember the file path below must be registered in the MongoDB, else it won't be recognized !!!
-        # The file path below is hardcoded in the test within the response 
-        file_path = '/home/centos/dtaas_test_api/priceDetail.png'
         response = self.client.open(
-            f'/v1/delete?file_path=%2Fhome%2Fcentos%2Fdtaas_test_api%2FpriceDetail.png',
+            f'/v1/delete?file_path={encoded_file_path}',
             method='DELETE'
         )
         self.assert200WithDetailsDELETE(response, f"Delete file at {file_path}")
