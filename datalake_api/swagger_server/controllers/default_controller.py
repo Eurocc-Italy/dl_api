@@ -146,7 +146,6 @@ def delete_file(file_path):
     except Exception as e:
         return f"An error occurred: {str(e)}", 500
 
-#INCLUDE A JSON PARAMETER, CONFIG FILE, WHERE IT HAS config_server = True/False and Config_client= True/False
 def query_post(query_file=None, python_file=None, config_json=None):
     try:
         # Ensure the query file and config JSON are provided

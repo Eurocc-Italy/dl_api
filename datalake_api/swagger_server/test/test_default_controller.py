@@ -35,12 +35,13 @@ class TestDefaultController(BaseTestCase):
         print(f"Response Size: {len(response.data)} bytes")
         print("=" * 80 + "\n")
 
-    def assert200WithDetailsQUERYPROCESS(self, response, query_file, python_file):
+    def assert200WithDetailsQUERYPROCESS(self, response, query_file, python_file, config_json):
         self.assert200(response, "Expected successful response for query and process")
         print("\n" + "=" * 80)
         print("SUCCESS: Query and Process Execution")
         print(f"Query File: {query_file.filename}")
         print(f"Python File: {python_file.filename}")
+        print(f"Config File: {config_json.filename}")  # Add this line to print the config file name
         print(f"Response Status: {response.status_code}")
         print(f"Response Body: {response.data.decode('utf-8')}")
         print("=" * 80 + "\n")
@@ -240,6 +241,10 @@ class TestDefaultController(BaseTestCase):
         """Test case for successful query and process execution."""
         query_file_content = "SELECT * FROM your_table;"
         python_file_content = "print('Hello, world!')"
+        config_json_content = json.dumps({
+            "config_server": {"key": "value"},  # Replace with actual/mock server config
+            "config_client": {"key": "value"}   # Replace with actual/mock client config
+        })
 
         query_file = FileStorage(
             stream=BytesIO(query_file_content.encode()), 
@@ -249,10 +254,15 @@ class TestDefaultController(BaseTestCase):
             stream=BytesIO(python_file_content.encode()), 
             filename='script.py'
         )
+        config_json = FileStorage(
+            stream=BytesIO(config_json_content.encode()),
+            filename='config.json'
+        )
 
         data = {
             'query_file': query_file,
-            'python_file': python_file
+            'python_file': python_file,
+            'config_json': config_json  # Add the config_json to the data
         }
 
         response = self.client.open(
