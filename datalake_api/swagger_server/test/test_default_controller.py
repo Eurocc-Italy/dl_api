@@ -215,7 +215,7 @@ class TestDefaultController(BaseTestCase):
         )
 
         # Reading the JSON metadata from the environment variable
-        metadata_content = config('TEST_METADATA_CONTENT', default=json.dumps([{"id": 1, "path": "/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg" }]))
+        metadata_content = config('TEST_METADATA_CONTENT', default=json.dumps([{"id": 100, "path": "/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg" }]))
 
         metadata_file = FileStorage(
             stream=BytesIO(metadata_content.encode()),
@@ -303,7 +303,7 @@ class TestDefaultController(BaseTestCase):
         )
     
         # Reading the JSON metadata from the environment variable
-        metadata_content = config('TEST_METADATA_CONTENT', default=json.dumps([{"id": 100, "path": "/home/centos/dtaas_test_api/airplane_0585.jpg" }]))
+        metadata_content = config('TEST_METADATA_CONTENT', default=json.dumps([{"id": 100, "path": "/home/centos/dtaas_test_api/COCO_dataset/airplane_0585.jpg" }]))
     
         metadata_file = FileStorage(
             stream=BytesIO(metadata_content.encode()),
