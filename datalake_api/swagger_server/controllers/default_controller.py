@@ -175,7 +175,7 @@ def query_post(query_file=None, python_file=None, config_json=None):
         launch_data = {
             "sql_query": query_content,
             "script_path": script_path,
-            "ID": unique_id,
+            "id": unique_id,
             "config_client": config_client or {},  # Insert empty dict if None
             "config_server": config_server or {}   # Insert empty dict if None
         }
