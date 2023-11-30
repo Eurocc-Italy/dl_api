@@ -5,6 +5,6 @@ setuptools
 swagger-ui-bundle
 pymongo == 4.5.0
 sh
-pyparsingl
+pyparsing
 sqlparse
 python_decouple
