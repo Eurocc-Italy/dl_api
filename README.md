@@ -1,23 +1,13 @@
-README for Datalake as a Service API
+# DTaaS API Brief intro
 
-Overview
+## Why COCO
 
-This document provides essential information about the API for datalake as a service. The API is designed to interact with a MongoDB database and manage data lake functionalities.
+COCO_dataset containes image file used in support of the development of the API. 
 
-Configuration
-.env File: This file is crucial for setting up the environment. It defines essential environment variables, including paths and MongoDB specifications necessary for the API server's operation.
-
-
-Directory Structure
-
-datalake_api (Main Folder):
-This is the primary directory for the API server. It contains all the necessary code and resources to run the datalake service.
-
-COCO_dataset:
-
-This folder is used for testing purposes, particularly for functionalities involving images. It is hardcoded into the system for ease of access and reliability during tests.
+## Configuration
+- .env File: This file is crucial for setting up the environment. It defines essential environment variables, including paths and MongoDB specifications necessary for the API server's operation.
 
 
-Note
+# Find a more detailed description and the code in the datalake_api
 
-The COCO_dataset is specifically tailored for testing image-related functionalities and should be utilized accordingly to ensure comprehensive testing coverage.
+- datalake_api (Main Folder): This is the primary directory for the API server. It contains all the necessary code and resources to run the datalake service.
