@@ -60,7 +60,7 @@ Besides auxiliary files provided by the connexion library, the code base is esse
 - models: Validates request parameters as dictated by the schemas provided within the swagger.yaml file
 
 ## API calls examples via curl
-The OpenAPI documentation can be used in order to obtain the below commands.  
+The OpenAPI documentation can be used in order to obtain the below commands. Whwn the API server is running it is possible to execute the following curl commands to call the API. 
 
 **download** a document at path/to/file
 ```bash
