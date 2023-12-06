@@ -6,6 +6,7 @@ from swagger_server import util
 from werkzeug.datastructures import FileStorage
 
 import os
+import shutil
 from flask import send_file, request
 import json
 from pymongo import MongoClient
@@ -23,7 +24,7 @@ from decouple import config
 import subprocess
 from tempfile import mkdtemp
 
-# from sh import pushd  # Import pushd from the sh library
+from sh import pushd  # Import pushd from the sh library
 
 
 # aider function to query_post
@@ -159,7 +160,7 @@ def query_post(query_file=None, python_file=None, config_json=None):
             config_server = None
 
         # Generate a unique ID and create a temporary directory
-        unique_id = str(uuid.uuid4())
+        unique_id = str(uuid.uuid4().hex)
         tdir = mkdtemp(prefix=unique_id, dir=os.getcwd())
 
         # Read and store sql_query.txt
@@ -173,9 +174,11 @@ def query_post(query_file=None, python_file=None, config_json=None):
                 script_out.write(python_file.read().decode("utf-8"))
 
         # Prepare and save launch.json in the temporary directory
+        # NOTE (Luca): script_path should be a relative path to the temporary directory, otherwise on the "launcher"
+        # it has a path like /home/centos/.../{uuid4.hex}/script.py which will not be found on HPC
         launch_data = {
             "sql_query": query_content,
-            "script_path": script_path,
+            "script_path": os.path.basename(script_path),
             "id": unique_id,
             "config_client": config_client or {},  # Insert empty dict if None
             "config_server": config_server or {},  # Insert empty dict if None
@@ -185,15 +188,17 @@ def query_post(query_file=None, python_file=None, config_json=None):
             json.dump(launch_data, launch_out, indent=4)
 
         # Execute the command within the temporary directory
-        #    with pushd(tdir):
-        #        command = f"dtaas_tui_server {launch_path}"
-        #        stdout, stderr = subprocess.Popen(
-        #            command,
-        #            shell=True,
-        #            stdout=subprocess.PIPE,
-        #            stderr=subprocess.PIPE,
-        #        ).communicate()
-        # shutil.rmtree(tdir)
+        # NOTE (Luca): same as before, since we're in the temporary directory we can just send the relative path of
+        # the json file, otherwise the client version on HPC gets a wrong path
+        with pushd(tdir):
+            command = f"dtaas_tui_server launch.json"
+            stdout, stderr = subprocess.Popen(
+                command,
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            ).communicate()
+        shutil.rmtree(tdir)
         return f"Files processed successfully, ID: {unique_id}", 200
 
     except Exception as e:
