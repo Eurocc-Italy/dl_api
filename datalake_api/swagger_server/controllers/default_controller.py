@@ -23,7 +23,7 @@ import logging
 from decouple import config
 import subprocess
 from tempfile import mkdtemp
-#from sh import pushd  # Import pushd from the sh library
+from sh import pushd  # Import pushd from the sh library
 
 class CustomFormatter(logging.Formatter):
     def format(self, record):

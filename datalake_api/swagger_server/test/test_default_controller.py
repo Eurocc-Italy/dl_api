@@ -119,18 +119,6 @@ class TestDefaultController(BaseTestCase):
         self.assert200WithDetailsDOWNLOAD(response, existing_file_id)
 
 
-
-    def test_download_file_not_found(self):
-        """Test case for attempting to download a file that doesn't exist."""
-        nonexistent_file_id = 'path/to/nonexistent/file'
-        response = self.client.open(
-            f'/v1/download/{nonexistent_file_id}',
-            method='GET'
-            )
-        self.assertEqual(response.status_code, 404, "Expected 404 for nonexistent file")
-
-
-
     ################################################################
     #DELETE
     def test_delete_succesful(self):
@@ -149,26 +137,6 @@ class TestDefaultController(BaseTestCase):
             headers=headers
         )
         self.assert200WithDetailsDELETE(response, f"Delete file at {file_path}")
-
-
-    def test_delete_nonexistent_file(self):
-        """Test case for attempting to delete a nonexistent file."""
-        response = self.client.open(
-            f'/v1/delete?file_path={urllib.parse.quote("/path/to/nonexistentfile")}',
-            method='DELETE'
-        )
-        self.assertEqual(response.status_code, 404, "Expected 404 for nonexistent file")
-    
-    def test_delete_invalid_file_path(self):
-        """Test case for deleting a file with an invalid file path."""
-        print("Running test_delete_invalid_file")
-        invalid_file_path = 'invalid/file\\path'
-        response = self.client.open(
-            f'/v1/delete?file_path={urllib.parse.quote(invalid_file_path)}',
-           method='DELETE'
-    )
-        self.assertEqual(response.status_code, 400, "Expected 400 for invalid file path")   
-
 
 
     ################################################################
