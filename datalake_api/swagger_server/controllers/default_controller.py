@@ -23,9 +23,21 @@ import logging
 from decouple import config
 import subprocess
 from tempfile import mkdtemp
+#from sh import pushd  # Import pushd from the sh library
 
-from sh import pushd  # Import pushd from the sh library
+class CustomFormatter(logging.Formatter):
+    def format(self, record):
+        record.uuid = getattr(record, 'uuid', 'N/A')  # Default to 'N/A' if UUID is not present
+        record.token = getattr(record, 'token', 'N/A')  # Default to 'N/A' if Token is not present
+        return super().format(record)
 
+# Configure logging with the custom formatter
+formatter = CustomFormatter('%(asctime)s - %(levelname)s - UUID: %(uuid)s - Token: %(token)s - %(message)s')
+handler = logging.StreamHandler()
+handler.setFormatter(formatter)
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+logger.addHandler(handler)
 
 # aider function to query_post
 def escape_special_characters(content):
@@ -66,6 +78,18 @@ def download_id_get(id_):  # noqa: E501
     :type id_: str
     :rtype: None
     """
+   # Extract the token from the Authorization header
+    auth_header = request.headers.get('Authorization')
+
+    if auth_header and auth_header.startswith('Bearer '):
+        token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
+    else:
+        # Handle cases where the Authorization header is missing or improperly formatted
+        return {"message": "Unauthorized: Token missing or malformed"}, 401
+    
+    unique_id = str(uuid.uuid4().hex)
+    logger.info('API call to %s', 'download_id_get', extra={'uuid': unique_id, 'token': token})
+
     try:
         # Validate the file path format
         if not is_valid_file_path(id_):
@@ -75,10 +99,6 @@ def download_id_get(id_):  # noqa: E501
             file_path = id_
         else:
             file_path = os.path.join(os.getcwd(), id_)
-
-        print(f"Debugging: Received path = {id_}")
-        print(f"Debugging: Absolute path = {file_path}")
-        print(f"Debugging: Current working directory = {os.getcwd()}")
 
         # Check if the file exists before attempting to send it
         if os.path.exists(file_path):
@@ -92,6 +112,19 @@ def download_id_get(id_):  # noqa: E501
 
 
 def delete_file(file_path):
+
+   # Extract the token from the Authorization header
+    auth_header = request.headers.get('Authorization')
+
+    if auth_header and auth_header.startswith('Bearer '):
+        token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
+    else:
+        # Handle cases where the Authorization header is missing or improperly formatted
+        return {"message": "Unauthorized: Token missing or malformed"}, 401
+    
+    unique_id = str(uuid.uuid4().hex)
+    logger.info('API call to %s', 'download_id_get', extra={'uuid': unique_id, 'token': token})
+
     # Initialize MongoDB client with decouple
     mongo_host = config("MONGO_HOST", default="localhost")
     mongo_port = config("MONGO_PORT", default=27017, cast=int)
@@ -144,7 +177,21 @@ def delete_file(file_path):
         return f"An error occurred: {str(e)}", 500
 
 
-def query_post(query_file=None, python_file=None, config_json=None):
+def query_post(query_file,  python_file=None, config_json=None):
+
+   # Extract the token from the Authorization header
+    auth_header = request.headers.get('Authorization')
+
+    if auth_header and auth_header.startswith('Bearer '):
+        token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
+    else:
+        # Handle cases where the Authorization header is missing or improperly formatted
+        return {"message": "Unauthorized: Token missing or malformed"}, 401
+    
+    unique_id = str(uuid.uuid4().hex)
+    logger.info('API call to %s', 'download_id_get', extra={'uuid': unique_id, 'token': token})
+
+
     try:
         # Ensure the query file and config JSON are provided
         if not query_file:
@@ -206,6 +253,19 @@ def query_post(query_file=None, python_file=None, config_json=None):
 
 
 def replace_entry(path, file=None, json_data=None):  # noqa: E501###
+
+   # Extract the token from the Authorization header
+    auth_header = request.headers.get('Authorization')
+
+    if auth_header and auth_header.startswith('Bearer '):
+        token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
+    else:
+        # Handle cases where the Authorization header is missing or improperly formatted
+        return {"message": "Unauthorized: Token missing or malformed"}, 401
+    
+    unique_id = str(uuid.uuid4().hex)
+    logger.info('API call to %s', 'download_id_get', extra={'uuid': unique_id, 'token': token})
+
     """Replace an existing entry and its associated file in S3 for the given path in MongoDB
 
      # noqa: E501
@@ -289,6 +349,19 @@ def replace_entry(path, file=None, json_data=None):  # noqa: E501###
 
 
 def update_entry(path, file=None):  # noqa: E501
+
+   # Extract the token from the Authorization header
+    auth_header = request.headers.get('Authorization')
+
+    if auth_header and auth_header.startswith('Bearer '):
+        token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
+    else:
+        # Handle cases where the Authorization header is missing or improperly formatted
+        return {"message": "Unauthorized: Token missing or malformed"}, 401
+    
+    unique_id = str(uuid.uuid4().hex)
+    logger.info('API call to %s', 'download_id_get', extra={'uuid': unique_id, 'token': token})
+
     """Update an existing entry in MongoDB based on the path and body."""
 
     print(f"Debug: Received body = {file}")
@@ -354,6 +427,19 @@ def update_entry(path, file=None):  # noqa: E501
 
 
 def upload_post(file, json_data):
+
+   # Extract the token from the Authorization header
+    auth_header = request.headers.get('Authorization')
+
+    if auth_header and auth_header.startswith('Bearer '):
+        token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
+    else:
+        # Handle cases where the Authorization header is missing or improperly formatted
+        return {"message": "Unauthorized: Token missing or malformed"}, 401
+    
+    unique_id = str(uuid.uuid4().hex)
+    logger.info('API call to %s', 'download_id_get', extra={'uuid': unique_id, 'token': token})
+
     # Initialize MongoDB client
     mongo_host = config("MONGO_HOST", default="localhost")
     mongo_port = config("MONGO_PORT", default=27017, cast=int)
@@ -419,6 +505,19 @@ def upload_post(file, json_data):
 
 
 def get_config():
+
+   # Extract the token from the Authorization header
+    #auth_header = request.headers.get('Authorization')
+#
+    #if auth_header and auth_header.startswith('Bearer '):
+    #    token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
+    #else:
+    #    # Handle cases where the Authorization header is missing or improperly formatted
+    #    return {"message": "Unauthorized: Token missing or malformed"}, 401
+    #
+    #unique_id = str(uuid.uuid4().hex)
+    #logger.info('API call to %s', 'download_id_get', extra={'uuid': unique_id, 'token': token})
+
     # config_file_path = "C:\\Users\\IvanGentile\\OneDrive - Net Service S.p.A\\Desktop\\API_datalake_gitlab\\dtaas_test_api\\single_entry_metadata_test.json"
     # try:
     #    if os.path.exists(config_file_path):
@@ -433,6 +532,18 @@ def get_config():
 
 
 def update_config():
+   # Extract the token from the Authorization header
+    #auth_header = request.headers.get('Authorization')
+#
+    #if auth_header and auth_header.startswith('Bearer '):
+    #    token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
+    #else:
+    #    # Handle cases where the Authorization header is missing or improperly formatted
+    #    return {"message": "Unauthorized: Token missing or malformed"}, 401
+    #
+    #unique_id = str(uuid.uuid4().hex)
+    #logger.info('API call to %s', 'download_id_get', extra={'uuid': unique_id, 'token': token})
+
     # config_file_path = "C:\\Users\\IvanGentile\\OneDrive - Net Service S.p.A\\Desktop\\API_datalake_gitlab\\dtaas_test_api\\single_entry_metadata_test.json"
     # try:
     #    # Extract new_config from the request

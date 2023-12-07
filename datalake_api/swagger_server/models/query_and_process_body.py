@@ -14,25 +14,30 @@ class QueryAndProcessBody(Model):
 
     Do not edit the class manually.
     """
-    def __init__(self, query_file: str=None, python_file: str=None):  # noqa: E501
+    def __init__(self, query_file: str=None, python_file: str=None, config_json: str=None):  # noqa: E501
         """QueryAndProcessBody - a model defined in Swagger
 
         :param query_file: The query_file of this QueryAndProcessBody.  # noqa: E501
         :type query_file: str
         :param python_file: The python_file of this QueryAndProcessBody.  # noqa: E501
         :type python_file: str
+        :param config_json: The config_json of this QueryAndProcessBody.  # noqa: E501
+        :type config_json: str
         """
         self.swagger_types = {
             'query_file': str,
-            'python_file': str
+            'python_file': str,
+            'config_json': str
         }
 
         self.attribute_map = {
             'query_file': 'query_file',
-            'python_file': 'python_file'
+            'python_file': 'python_file',
+            'config_json': 'config_json'
         }
         self._query_file = query_file
         self._python_file = python_file
+        self._config_json = config_json
 
     @classmethod
     def from_dict(cls, dikt) -> 'QueryAndProcessBody':
@@ -86,7 +91,26 @@ class QueryAndProcessBody(Model):
         :param python_file: The python_file of this QueryAndProcessBody.
         :type python_file: str
         """
-        if python_file is None:
-            raise ValueError("Invalid value for `python_file`, must not be `None`")  # noqa: E501
 
         self._python_file = python_file
+
+    @property
+    def config_json(self) -> str:
+        """Gets the config_json of this QueryAndProcessBody.
+
+
+        :return: The config_json of this QueryAndProcessBody.
+        :rtype: str
+        """
+        return self._config_json
+
+    @config_json.setter
+    def config_json(self, config_json: str):
+        """Sets the config_json of this QueryAndProcessBody.
+
+
+        :param config_json: The config_json of this QueryAndProcessBody.
+        :type config_json: str
+        """
+
+        self._config_json = config_json

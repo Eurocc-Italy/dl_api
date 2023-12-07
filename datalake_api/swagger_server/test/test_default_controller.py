@@ -17,6 +17,9 @@ class TestDefaultController(BaseTestCase):
     #The special assert for succefull execution are implemented for the most important tests.
     # Notice that by default Nothing prints if the test works
 
+    AUTH_TOKEN = config('TEST_AUTH_TOKEN', default='your_jwt_token_here')  # Replace 'your_jwt_token_here' with a default token or set it via environment variable
+
+
     def assert200WithDetailsDELETE(self, response, test_case_description):
         self.assert200(response, f"Response for {test_case_description}")
         print("\n" + "=" * 80)
@@ -103,9 +106,15 @@ class TestDefaultController(BaseTestCase):
         existing_file_id = f'{local_folder}/{file_name}'
         encoded_file_id = urllib.parse.quote(existing_file_id)
 
+            # Adding authorization header
+        headers = {
+            'Authorization': f'Bearer {self.AUTH_TOKEN}',
+            'accept': 'application/octet-stream'}
+
         response = self.client.open(
             f'/v1/download?id={encoded_file_id}',
-            method='GET'
+            method='GET',
+            headers = headers
         )
         self.assert200WithDetailsDOWNLOAD(response, existing_file_id)
 
@@ -131,9 +140,13 @@ class TestDefaultController(BaseTestCase):
         file_path = f'{local_folder}/{file_name}'
         encoded_file_path = urllib.parse.quote(file_path)
 
+        headers = {
+            'Authorization': f'Bearer {self.AUTH_TOKEN}'
+        }
         response = self.client.open(
             f'/v1/delete?file_path={encoded_file_path}',
-            method='DELETE'
+            method='DELETE',
+            headers=headers
         )
         self.assert200WithDetailsDELETE(response, f"Delete file at {file_path}")
 
@@ -188,11 +201,15 @@ class TestDefaultController(BaseTestCase):
             'config_json': config_json
         }
 
+        headers = {
+            'Authorization': f'Bearer {self.AUTH_TOKEN}',
+            'content-type': 'multipart/form-data'
+        }
         response = self.client.open(
             '/v1/query_and_process',
             method='POST',
-            data=data,
-            content_type='multipart/form-data'
+            headers=headers,
+            data=data
         )
         self.assert200WithDetailsQUERYPROCESS(response, query_file, python_file, config_json)
 
@@ -229,11 +246,15 @@ class TestDefaultController(BaseTestCase):
         }
 
 
+        headers = {
+            'Authorization': f'Bearer {self.AUTH_TOKEN}',
+            'content-type': 'multipart/form-data'
+        }
         response = self.client.open(
             f'/v1/replace?path={urllib.parse.quote(valid_path)}',
             method='PUT',
-            data=data,
-            content_type='multipart/form-data'
+            headers=headers,
+            data=data
         )
 
         # Debugging output for failure
@@ -273,13 +294,16 @@ class TestDefaultController(BaseTestCase):
             'file': metadata_file
         }
 
+        headers = {
+            'Authorization': f'Bearer {self.AUTH_TOKEN}',
+            'content-type': 'multipart/form-data'
+        }
         response = self.client.open(
             f'/v1/update?path={urllib.parse.quote(valid_path)}',
             method='PATCH',
-            data=data,
-            content_type='multipart/form-data'
+            headers=headers,
+            data=data
         )
-
         self.assert200WithDetailsUPDATE(response, valid_path, metadata_file)
 
 
@@ -316,11 +340,15 @@ class TestDefaultController(BaseTestCase):
             'json_data': metadata_file
         }
     
+        headers = {
+            'Authorization': f'Bearer {self.AUTH_TOKEN}',
+            'content-type': 'multipart/form-data'
+        }
         response = self.client.open(
             '/v1/upload',
             method='POST',
-            data=data,
-            content_type='multipart/form-data'
+            headers=headers,
+            data=data
         )
         self.assert200WithDetailsUPLOAD(response, file, metadata_file)
 

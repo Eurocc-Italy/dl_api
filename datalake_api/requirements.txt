@@ -8,3 +8,4 @@ sh
 pyparsing
 sqlparse
 python_decouple
+python-jose
