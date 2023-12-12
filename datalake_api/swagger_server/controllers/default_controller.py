@@ -71,13 +71,17 @@ def is_valid_file_path(path):
     return not any(char in path for char in ["\\", ":", "*", "?", '"', "<", ">", "|"])
 
 
-def download_id_get(id_):  # noqa: E501
+def download_id_get(id_, **kwargs):  # noqa: E501
     """
     Download a file
     :param id_: File path
     :type id_: str
     :rtype: None
     """
+    # Information printed for system log
+    print("Dictionary with token info:")
+    print(kwargs)
+
    # Extract the token from the Authorization header
     auth_header = request.headers.get('Authorization')
 
@@ -111,11 +115,13 @@ def download_id_get(id_):  # noqa: E501
         return "Internal Server Error", 500
 
 
-def delete_file(file_path):
+def delete_file(file_path, **kwargs):
+    # Information printed for system log
+    print("Dictionary with token info:")
+    print(kwargs)
 
    # Extract the token from the Authorization header
     auth_header = request.headers.get('Authorization')
-
     if auth_header and auth_header.startswith('Bearer '):
         token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
     else:
@@ -123,7 +129,7 @@ def delete_file(file_path):
         return {"message": "Unauthorized: Token missing or malformed"}, 401
     
     unique_id = str(uuid.uuid4().hex)
-    logger.info('API call to %s', 'download_id_get', extra={'uuid': unique_id, 'token': token})
+    logger.info('API call to %s', 'delete_id_get', extra={'uuid': unique_id, 'token': token})
 
     # Initialize MongoDB client with decouple
     mongo_host = config("MONGO_HOST", default="localhost")
@@ -177,7 +183,10 @@ def delete_file(file_path):
         return f"An error occurred: {str(e)}", 500
 
 
-def query_post(query_file,  python_file=None, config_json=None):
+def query_post(query_file,  python_file=None, config_json=None, **kwargs):
+    # Information printed for system log
+    print("Dictionary with token info:")
+    print(kwargs)
 
    # Extract the token from the Authorization header
     auth_header = request.headers.get('Authorization')
@@ -189,7 +198,7 @@ def query_post(query_file,  python_file=None, config_json=None):
         return {"message": "Unauthorized: Token missing or malformed"}, 401
     
     unique_id = str(uuid.uuid4().hex)
-    logger.info('API call to %s', 'download_id_get', extra={'uuid': unique_id, 'token': token})
+    logger.info('API call to %s', 'query_post', extra={'uuid': unique_id, 'token': token})
 
 
     try:
@@ -234,9 +243,9 @@ def query_post(query_file,  python_file=None, config_json=None):
         with open(launch_path, "w") as launch_out:
             json.dump(launch_data, launch_out, indent=4)
 
-        # Execute the command within the temporary directory
-        # NOTE (Luca): same as before, since we're in the temporary directory we can just send the relative path of
-        # the json file, otherwise the client version on HPC gets a wrong path
+       # Execute the command within the temporary directory
+       # NOTE (Luca): same as before, since we're in the temporary directory we can just send the relative path of
+       # the json file, otherwise the client version on HPC gets a wrong path
         with pushd(tdir):
             command = f"dtaas_tui_server launch.json"
             stdout, stderr = subprocess.Popen(
@@ -252,7 +261,10 @@ def query_post(query_file,  python_file=None, config_json=None):
         return f"An error occurred: {str(e)}", 500
 
 
-def replace_entry(path, file=None, json_data=None):  # noqa: E501###
+def replace_entry(path, file=None, json_data=None, **kwargs):  # noqa: E501###
+    # Information printed for system log
+    print("Dictionary with token info:")
+    print(kwargs)
 
    # Extract the token from the Authorization header
     auth_header = request.headers.get('Authorization')
@@ -264,7 +276,7 @@ def replace_entry(path, file=None, json_data=None):  # noqa: E501###
         return {"message": "Unauthorized: Token missing or malformed"}, 401
     
     unique_id = str(uuid.uuid4().hex)
-    logger.info('API call to %s', 'download_id_get', extra={'uuid': unique_id, 'token': token})
+    logger.info('API call to %s', 'replace_entry', extra={'uuid': unique_id, 'token': token})
 
     """Replace an existing entry and its associated file in S3 for the given path in MongoDB
 
@@ -348,7 +360,10 @@ def replace_entry(path, file=None, json_data=None):  # noqa: E501###
         return f"An error occurred: {str(e)}", 500
 
 
-def update_entry(path, file=None):  # noqa: E501
+def update_entry(path, file=None, **kwargs):  # noqa: E501
+    # Information printed for system log
+    print("Dictionary with token info:")
+    print(kwargs)
 
    # Extract the token from the Authorization header
     auth_header = request.headers.get('Authorization')
@@ -360,7 +375,7 @@ def update_entry(path, file=None):  # noqa: E501
         return {"message": "Unauthorized: Token missing or malformed"}, 401
     
     unique_id = str(uuid.uuid4().hex)
-    logger.info('API call to %s', 'download_id_get', extra={'uuid': unique_id, 'token': token})
+    logger.info('API call to %s', 'update_entry', extra={'uuid': unique_id, 'token': token})
 
     """Update an existing entry in MongoDB based on the path and body."""
 
@@ -426,7 +441,10 @@ def update_entry(path, file=None):  # noqa: E501
         return f"An error occurred: {str(e)}", 500
 
 
-def upload_post(file, json_data):
+def upload_post(file, json_data, **kwargs):
+    # Information printed for system log
+    print("Dictionary with token info:")
+    print(kwargs)
 
    # Extract the token from the Authorization header
     auth_header = request.headers.get('Authorization')
@@ -438,7 +456,7 @@ def upload_post(file, json_data):
         return {"message": "Unauthorized: Token missing or malformed"}, 401
     
     unique_id = str(uuid.uuid4().hex)
-    logger.info('API call to %s', 'download_id_get', extra={'uuid': unique_id, 'token': token})
+    logger.info('API call to %s', 'upload_post', extra={'uuid': unique_id, 'token': token})
 
     # Initialize MongoDB client
     mongo_host = config("MONGO_HOST", default="localhost")
@@ -504,7 +522,10 @@ def upload_post(file, json_data):
         return f"Upload Failed: {str(e)}", 400
 
 
-def get_config():
+def get_config(**kwargs):
+    # Information printed for system log
+    #print("Dictionary with token info:")
+    #print(kwargs)
 
    # Extract the token from the Authorization header
     #auth_header = request.headers.get('Authorization')
@@ -516,7 +537,7 @@ def get_config():
     #    return {"message": "Unauthorized: Token missing or malformed"}, 401
     #
     #unique_id = str(uuid.uuid4().hex)
-    #logger.info('API call to %s', 'download_id_get', extra={'uuid': unique_id, 'token': token})
+    #logger.info('API call to %s', 'get_config', extra={'uuid': unique_id, 'token': token})
 
     # config_file_path = "C:\\Users\\IvanGentile\\OneDrive - Net Service S.p.A\\Desktop\\API_datalake_gitlab\\dtaas_test_api\\single_entry_metadata_test.json"
     # try:
@@ -531,7 +552,11 @@ def get_config():
     return print("out of service for now")
 
 
-def update_config():
+def update_config(**kwargs):
+    # Information printed for system log
+    #print("Dictionary with token info:")
+    #print(kwargs)
+   
    # Extract the token from the Authorization header
     #auth_header = request.headers.get('Authorization')
 #
@@ -542,7 +567,7 @@ def update_config():
     #    return {"message": "Unauthorized: Token missing or malformed"}, 401
     #
     #unique_id = str(uuid.uuid4().hex)
-    #logger.info('API call to %s', 'download_id_get', extra={'uuid': unique_id, 'token': token})
+    #logger.info('API call to %s', 'update_config', extra={'uuid': unique_id, 'token': token})
 
     # config_file_path = "C:\\Users\\IvanGentile\\OneDrive - Net Service S.p.A\\Desktop\\API_datalake_gitlab\\dtaas_test_api\\single_entry_metadata_test.json"
     # try:

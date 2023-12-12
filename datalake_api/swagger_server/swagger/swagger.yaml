@@ -241,10 +241,10 @@ paths:
   
 components:
   securitySchemes:
-    bearerAuth:            # arbitrary name for the security scheme
+    bearerAuth:           
       type: http
       scheme: bearer
-      bearerFormat: JWT    # optional, arbitrary value for documentation purposes:
+      bearerFormat: JWT    
       x-bearerInfoFunc: swagger_server.controllers.authorization_controller.decode_token
 
   schemas:
@@ -335,4 +335,4 @@ components:
           type: string
           format: binary
 security:
-  - bearerAuth: []         # use the same name as above
+  - bearerAuth: []        
