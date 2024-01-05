@@ -7,5 +7,6 @@ pymongo == 4.5.0
 sh
 pyparsing
 sqlparse @ git+https://github.com/lbabetto/sqlparse
+dtaas @ git+https://gitlab.hpc.cineca.it/lbabetto/DTaaS_TUI
 python_decouple
 python-jose
