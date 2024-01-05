@@ -6,6 +6,6 @@ swagger-ui-bundle
 pymongo == 4.5.0
 sh
 pyparsing
-sqlparse
+sqlparse @ git+https://github.com/lbabetto/sqlparse
 python_decouple
 python-jose
