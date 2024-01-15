@@ -4,9 +4,6 @@ python_dateutil == 2.6.0
 setuptools
 swagger-ui-bundle
 pymongo == 4.5.0
-sh
-pyparsing
-sqlparse @ git+https://github.com/lbabetto/sqlparse
 DTaaS_TUI @ git+https://gitlab.hpc.cineca.it/lbabetto/DTaaS_TUI
 python_decouple
 python-jose
