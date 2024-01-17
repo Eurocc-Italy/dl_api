@@ -13,8 +13,15 @@ VERSION = "1.0.0"
 # http://pypi.python.org/pypi/setuptools
 
 REQUIRES = [
-    "connexion",
-    "swagger-ui-bundle>=0.0.2"
+    "connexion == 2.14.2",
+    "connexion[swagger-ui]" ,
+    "python_dateutil == 2.6.0",
+    "setuptools",
+    "swagger-ui-bundle",
+    "pymongo == 4.5.0",
+    "DTaaS_TUI @ git+https://gitlab.hpc.cineca.it/lbabetto/DTaaS_TUI",
+    "python_decouple",
+    "python-jose",
 ]
 
 setup(
