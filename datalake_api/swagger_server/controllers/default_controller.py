@@ -493,7 +493,7 @@ def upload_post(file, json_data, **kwargs):
         )
 
         response = s3.upload_file(
-            Filename=file.filename,
+            Filename=file,  # file path???
             Bucket=env_config.get("BUCKET"),
             Key=file.filename,
         )

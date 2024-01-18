@@ -22,6 +22,7 @@ REQUIRES = [
     "DTaaS_TUI @ git+https://gitlab.hpc.cineca.it/lbabetto/DTaaS_TUI",
     "boto3",
     "python-decouple",
+    "python-dotenv",
     "python-jose",
 ]
 
