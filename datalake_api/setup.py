@@ -21,7 +21,7 @@ REQUIRES = [
     "pymongo == 4.5.0",
     "DTaaS_TUI @ git+https://gitlab.hpc.cineca.it/lbabetto/DTaaS_TUI",
     "boto3",
-    "python_decouple",
+    "python-decouple",
     "python-jose",
 ]
 
