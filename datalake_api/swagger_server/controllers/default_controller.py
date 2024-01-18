@@ -20,12 +20,15 @@ from swagger_server import util
 import uuid
 import logging
 
-from decouple import config
+from decouple import Config, RepositoryEnv
 import subprocess
 from tempfile import mkdtemp
 from sh import pushd  # Import pushd from the sh library
 
 import boto3
+
+DOTENV_FILE = "/home/centos/.env"
+env_config = Config(RepositoryEnv(DOTENV_FILE))
 
 
 class CustomFormatter(logging.Formatter):
@@ -137,10 +140,10 @@ def delete_file(file_path, **kwargs):
     logger.info("API call to %s", "delete_id_get", extra={"uuid": unique_id, "token": token})
 
     # Initialize MongoDB client with decouple
-    mongo_host = config("MONGO_HOST", default="localhost")
-    mongo_port = config("MONGO_PORT", default=27017, cast=int)
-    mongo_db_name = config("MONGO_DB_NAME", default="datalake")
-    mongo_collection_name = config("MONGO_COLLECTION_NAME", default="metadata")
+    mongo_host = env_config.get("MONGO_HOST", default="localhost")
+    mongo_port = env_config.get("MONGO_PORT", default=27017, cast=int)
+    mongo_db_name = env_config.get("MONGO_DB_NAME", default="datalake")
+    mongo_collection_name = env_config.get("MONGO_COLLECTION_NAME", default="metadata")
 
     client = MongoClient(mongo_host, mongo_port)
     db = client[mongo_db_name]
@@ -298,17 +301,17 @@ def replace_entry(path, file=None, json_data=None, **kwargs):  # noqa: E501###
     # Capture metadata and file from request
 
     # Initialize MongoDB client
-    mongo_host = config("MONGO_HOST", default="localhost")
-    mongo_port = config("MONGO_PORT", default=27017, cast=int)
-    mongo_db_name = config("MONGO_DB_NAME", default="datalake")
-    mongo_collection_name = config("MONGO_COLLECTION_NAME", default="metadata")
+    mongo_host = env_config.get("MONGO_HOST", default="localhost")
+    mongo_port = env_config.get("MONGO_PORT", default=27017, cast=int)
+    mongo_db_name = env_config.get("MONGO_DB_NAME", default="datalake")
+    mongo_collection_name = env_config.get("MONGO_COLLECTION_NAME", default="metadata")
 
     client = MongoClient(mongo_host, mongo_port)
     db = client[mongo_db_name]
     collection = db[mongo_collection_name]
 
     # Specify the local folder for file storage
-    local_folder = config("LOCAL_FOLDER", default="/home/centos/dtaas_test_api/COCO_dataset")
+    local_folder = env_config.get("LOCAL_FOLDER", default="/home/centos/dtaas_test_api/COCO_dataset")
 
     try:
         # Check if the received path is an absolute path or relative to the current working directory
@@ -386,10 +389,10 @@ def update_entry(path, file=None, **kwargs):  # noqa: E501
     print(f"Debug: Received body = {file}")
 
     # Initialize MongoDB client
-    mongo_host = config("MONGO_HOST", default="localhost")
-    mongo_port = config("MONGO_PORT", default=27017, cast=int)
-    mongo_db_name = config("MONGO_DB_NAME", default="datalake")
-    mongo_collection_name = config("MONGO_COLLECTION_NAME", default="metadata")
+    mongo_host = env_config.get("MONGO_HOST", default="localhost")
+    mongo_port = env_config.get("MONGO_PORT", default=27017, cast=int)
+    mongo_db_name = env_config.get("MONGO_DB_NAME", default="datalake")
+    mongo_collection_name = env_config.get("MONGO_COLLECTION_NAME", default="metadata")
 
     client = MongoClient(mongo_host, mongo_port)
     db = client[mongo_db_name]
@@ -399,7 +402,7 @@ def update_entry(path, file=None, **kwargs):  # noqa: E501
     file_replacement = False
 
     # Specify local folder for file storage
-    local_folder = config("LOCAL_FOLDER", default="/home/centos/dtaas_test_api/COCO_dataset")
+    local_folder = env_config.get("LOCAL_FOLDER", default="/home/centos/dtaas_test_api/COCO_dataset")
 
     try:
         # Determine absolute path
@@ -463,10 +466,10 @@ def upload_post(file, json_data, **kwargs):
     logger.info("API call to %s", "upload_post", extra={"uuid": unique_id, "token": token})
 
     # Initialize MongoDB client
-    mongo_host = config("MONGO_HOST", default="localhost")
-    mongo_port = config("MONGO_PORT", default=27017, cast=int)
-    mongo_db_name = config("MONGO_DB_NAME", default="datalake")
-    mongo_collection_name = config("MONGO_COLLECTION_NAME", default="metadata")
+    mongo_host = env_config.get("MONGO_HOST", default="localhost")
+    mongo_port = env_config.get("MONGO_PORT", default=27017, cast=int)
+    mongo_db_name = env_config.get("MONGO_DB_NAME", default="datalake")
+    mongo_collection_name = env_config.get("MONGO_COLLECTION_NAME", default="metadata")
 
     client = MongoClient(mongo_host, mongo_port)
     db = client[mongo_db_name]
@@ -479,7 +482,7 @@ def upload_post(file, json_data, **kwargs):
     file_replacement = False
 
     try:
-        # file_path = config("LOCAL_FOLDER", default="/home/centos/dtaas_test_api/COCO_dataset")
+        # file_path = env_config.get("LOCAL_FOLDER", default="/home/centos/dtaas_test_api/COCO_dataset")
         # with open(os.path.join(file_path, file.filename), "wb") as f:
         #     f.write(file.read())
 
@@ -491,7 +494,7 @@ def upload_post(file, json_data, **kwargs):
 
         response = s3.upload_file(
             Filename=file.filename,
-            Bucket=config("BUCKET"),
+            Bucket=env_config.get("BUCKET"),
             Key=file.filename,
         )
 
