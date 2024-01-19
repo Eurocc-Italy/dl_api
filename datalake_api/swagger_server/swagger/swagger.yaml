@@ -158,23 +158,23 @@ paths:
       summary: Delete a file in datalake (S3) and its MongoDB entry based on the given file_path
       operationId: delete_file
       parameters:
-        - name: file_path
+        - name: file_name
           in: query
           required: true
-          description: Path of the file in the datalake and MongoDB to be deleted
+          description: Name (S3 key) of the file in the datalake and MongoDB to be deleted
           schema:
             type: string
       responses:
         '200':
           description: File and its database entry deleted successfully
         '400':
-          description: Bad Request - Invalid file path or format
+          description: Bad Request - Invalid file name or format
         '401':
           description: Unauthorized - Invalid Token
         '403':
           description: Forbidden - Insufficient Permissions
         '404':
-          description: Not Found - File path does not exist
+          description: Not Found - File does not exist
       x-openapi-router-controller: swagger_server.controllers.default_controller
   /config:
     get:
