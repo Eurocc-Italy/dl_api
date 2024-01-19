@@ -517,7 +517,7 @@ def upload_post(file, json_data, **kwargs):
                     file_replacement = True
 
         if json_data_list:
-            collection.insert_many(json_data_list)
+            collection.insert_one(json_data_list)
 
         # Step 3: Success message
         if file_replacement:
@@ -536,7 +536,7 @@ def upload_post(file, json_data, **kwargs):
         # This assumes that all inserted documents have a unique 'path'
         if "json_data_list" in locals():
             # paths_to_remove = [doc.get("s3_key", "") for doc in json_data_list]
-            collection.delete_many({"s3_key": file.filename})
+            collection.delete_one({"s3_key": file.filename})
 
         return f"Upload Failed: {str(e)}", 400
 
