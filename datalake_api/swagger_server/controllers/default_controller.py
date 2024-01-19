@@ -99,7 +99,7 @@ def download_id_get(file_name, **kwargs):  # noqa: E501
         # Handle cases where the Authorization header is missing or improperly formatted
         return {"message": "Unauthorized: Token missing or malformed"}, 401
 
-    logger.info("API call to %s", "download_id_get", extra={"filename": file_name, "token": token})
+    logger.info("API call to %s", "download_id_get", extra={"File": file_name, "token": token})
 
     try:
         # NOTE: S3 credentials must be saved in ~/.aws/config file
