@@ -123,7 +123,7 @@ def download_id_get(id_, **kwargs):  # noqa: E501
         return "Internal Server Error", 500
 
 
-def delete_file(s3_key, **kwargs):
+def delete_file(file_name, **kwargs):
     # Information printed for system log
     print("Dictionary with token info:")
     print(kwargs)
@@ -136,7 +136,7 @@ def delete_file(s3_key, **kwargs):
         # Handle cases where the Authorization header is missing or improperly formatted
         return {"message": "Unauthorized: Token missing or malformed"}, 401
 
-    logger.info("API call to %s", "delete_id_get", extra={"S3 Key": s3_key, "token": token})
+    logger.info("API call to %s", "delete_id_get", extra={"File": file_name, "token": token})
 
     # Initialize MongoDB client with decouple
     mongo_host = env_config.get("MONGO_HOST", default="localhost")
@@ -149,7 +149,7 @@ def delete_file(s3_key, **kwargs):
     collection = db[mongo_collection_name]
 
     try:
-        existing_entry = collection.find_one({"s3_key": s3_key})
+        existing_entry = collection.find_one({"s3_key": file_name})
 
         # Debug print: Output the existing_entry after MongoDB query
         print(f"Debug: existing_entry after query = {existing_entry}")
@@ -163,10 +163,10 @@ def delete_file(s3_key, **kwargs):
 
             s3.delete_file(
                 Bucket=env_config.get("BUCKET"),
-                Key=s3_key,
+                Key=file_name,
             )
 
-            result = collection.delete_one({"s3_key": s3_key})
+            result = collection.delete_one({"s3_key": file_name})
 
             if result.deleted_count:
                 return "File and its database entry deleted successfully", 200
