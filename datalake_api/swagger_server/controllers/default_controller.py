@@ -492,6 +492,8 @@ def upload_post(file, json_data, **kwargs):
             endpoint_url="https://s3ds.g100st.cineca.it/",
         )
 
+        print(type(file), file)
+
         response = s3.upload_file(
             Filename=file,  # file path???
             Bucket=env_config.get("BUCKET"),
