@@ -492,13 +492,16 @@ def upload_post(file, json_data, **kwargs):
             endpoint_url="https://s3ds.g100st.cineca.it/",
         )
 
-        print(type(file), file.__dict__)
-
-        response = s3.upload_file(
-            Filename=file.name,  # file path???
-            Bucket=env_config.get("BUCKET"),
-            Key=file.filename,
-        )
+        os.makedirs("tmp")
+        with pushd("tmp"):
+            with open(file.filename, "wb") as f:
+                f.write(file.read())
+            response = s3.upload_file(
+                Filename=file.filename,
+                Bucket=env_config.get("BUCKET"),
+                Key=file.filename,
+            )
+        shutil.rmtree("tmp")
 
         # Step 2: Insert json_data into MongoDB
         # Properly read json_data and insert it into MongoDB
