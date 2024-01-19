@@ -462,8 +462,7 @@ def upload_post(file, json_data, **kwargs):
         # Handle cases where the Authorization header is missing or improperly formatted
         return {"message": "Unauthorized: Token missing or malformed"}, 401
 
-    unique_id = str(uuid.uuid4().hex)
-    logger.info("API call to %s", "upload_post", extra={"uuid": unique_id, "token": token})
+    logger.info("API call to %s", "upload_post", extra={"File": file.filename, "token": token})
 
     # Initialize MongoDB client
     mongo_host = env_config.get("MONGO_HOST", default="localhost")
@@ -482,41 +481,33 @@ def upload_post(file, json_data, **kwargs):
             endpoint_url="https://s3ds.g100st.cineca.it/",
         )
 
-        response = s3.upload_file(
-            Filename=f"/home/centos/UPLOAD/{file.filename}",
-            Bucket=env_config.get("BUCKET"),
-            Key=file.filename,
-        )
-        print(f"S3 response: {response}")
-
         # Step 2: Insert json_data into MongoDB
         # Properly read json_data and insert it into MongoDB
         json_data_str = json_data.read().decode("utf-8")
         json_data_list = json.loads(json_data_str)
         json_data_list["s3_key"] = file.filename
 
-        existing_entry = collection.find_one({"s3_key": file.filename})
+        file_replacement = False
+        if collection.find_one({"s3_key": file.filename}):
+            answer = input(f"Entry already present in the collection. Are you sure you want to overwrite it? (y/n)")
+            if answer.startswith(("y").lower()):
+                file_replacement = True
 
-        if existing_entry:
-            for doc in json_data_list:
-                if collection.find_one({"s3_key": file.filename}):
-                    print(
-                        f"Entry already present in the collection --> Metadata is NOT update, File data is possibly replacing an existing file associate with key = {file.filename}"
-                    )
-                    json_data_list.remove(doc)
-                    file_replacement = True
-
-        if json_data_list:
+        if file_replacement:
+            s3.upload_file(
+                Filename=f"/home/centos/UPLOAD/{file.filename}",
+                Bucket=env_config.get("BUCKET"),
+                Key=file.filename,
+            )
             collection.insert_one(json_data_list)
 
-        # Step 3: Success message
-        if file_replacement:
-            return (
-                "Path metadata already present in MongoDB collection - File Upload Successful, Metadata is NOT updated",
-                201,
-            )
+            # Step 3: Success message
+            return ("File Upload Successful, Metadata upload Successful ", 201)
         else:
-            return "File Upload Successful, Metadata upload Successful ", 201
+            (
+                f"Upload Failed, entry was not overwritten.",
+                400,
+            )
 
     except boto3.exceptions.S3UploadFailedError:
         return (
