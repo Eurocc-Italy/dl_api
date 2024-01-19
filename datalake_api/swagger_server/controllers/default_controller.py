@@ -492,6 +492,8 @@ def upload_post(file, json_data, **kwargs):
             endpoint_url="https://s3ds.g100st.cineca.it/",
         )
 
+        print(os.getcwd())
+
         response = s3.upload_file(
             Filename=f"/home/centos/upload/{file.filename}",
             Bucket=env_config.get("BUCKET"),
