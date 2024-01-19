@@ -79,10 +79,10 @@ def is_valid_file_path(path):
     return not any(char in path for char in ["\\", ":", "*", "?", '"', "<", ">", "|"])
 
 
-def download_id_get(id_, **kwargs):  # noqa: E501
+def download_id_get(file_name, **kwargs):  # noqa: E501
     """
     Download a file
-    :param id_: File name
+    :param file_name: File name
     :type id_: str
     :rtype: None
     """
@@ -99,7 +99,7 @@ def download_id_get(id_, **kwargs):  # noqa: E501
         # Handle cases where the Authorization header is missing or improperly formatted
         return {"message": "Unauthorized: Token missing or malformed"}, 401
 
-    logger.info("API call to %s", "download_id_get", extra={"filename": id_, "token": token})
+    logger.info("API call to %s", "download_id_get", extra={"filename": file_name, "token": token})
 
     try:
         # NOTE: S3 credentials must be saved in ~/.aws/config file
@@ -110,12 +110,12 @@ def download_id_get(id_, **kwargs):  # noqa: E501
 
         s3.download_file(
             Bucket=env_config.get("BUCKET"),
-            Filename=f"/home/centos/DOWNLOAD/{id_}",
-            Key=id_,
+            Filename=f"/home/centos/DOWNLOAD/{file_name}",
+            Key=file_name,
         )
-        # Check if the file exists before attempting to send it
-        return send_file(f"/home/centos/DOWNLOAD/{id_}", as_attachment=True), 200
-        return "File not found", 404
+
+        return send_file(f"/home/centos/DOWNLOAD/{file_name}", as_attachment=True), 200
+        # return "File not found", 404
 
     except Exception as e:
         print(f"An error occurred: {e}")

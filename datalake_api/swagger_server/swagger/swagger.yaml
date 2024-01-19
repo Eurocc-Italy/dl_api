@@ -102,7 +102,7 @@ paths:
       summary: Download an item (using item path) from the datalake
       operationId: download_id_get
       parameters:
-        - name: id
+        - name: file_name
           in: query
           required: true
           description: Path of the item to be downloaded
