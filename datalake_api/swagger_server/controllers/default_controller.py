@@ -490,7 +490,6 @@ def upload_post(file, json_data, **kwargs):
         s3: boto3.Session.client = boto3.client(
             service_name="s3",
             endpoint_url="https://s3ds.g100st.cineca.it/",
-            region="cinecahpc",
         )
 
         response = s3.upload_file(
