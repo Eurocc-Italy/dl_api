@@ -487,27 +487,18 @@ def upload_post(file, json_data, **kwargs):
         json_data_list = json.loads(json_data_str)
         json_data_list["s3_key"] = file.filename
 
-        file_replacement = False
         if collection.find_one({"s3_key": file.filename}):
-            answer = input(f"Entry already present in the collection. Are you sure you want to overwrite it? (y/n)")
-            if answer.startswith(("y").lower()):
-                file_replacement = True
+            return f"Upload Failed, entry is already present. Please use POST method to update an existing entry", 400
 
-        if file_replacement:
-            s3.upload_file(
-                Filename=f"/home/centos/UPLOAD/{file.filename}",
-                Bucket=env_config.get("BUCKET"),
-                Key=file.filename,
-            )
-            collection.insert_one(json_data_list)
+        s3.upload_file(
+            Filename=f"/home/centos/UPLOAD/{file.filename}",
+            Bucket=env_config.get("BUCKET"),
+            Key=file.filename,
+        )
+        collection.insert_one(json_data_list)
 
-            # Step 3: Success message
-            return ("File Upload Successful, Metadata upload Successful ", 201)
-        else:
-            (
-                f"Upload Failed, entry was not overwritten.",
-                400,
-            )
+        # Step 3: Success message
+        return ("File and Metadata upload successful.", 201)
 
     except boto3.exceptions.S3UploadFailedError:
         return (
