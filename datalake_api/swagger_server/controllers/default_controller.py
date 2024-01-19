@@ -535,8 +535,8 @@ def upload_post(file, json_data, **kwargs):
 
         # This assumes that all inserted documents have a unique 'path'
         if "json_data_list" in locals():
-            paths_to_remove = [doc.get("s3_key", "") for doc in json_data_list]
-            collection.delete_many({"s3_key": {"$in": paths_to_remove}})
+            # paths_to_remove = [doc.get("s3_key", "") for doc in json_data_list]
+            collection.delete_many({"s3_key": {"$in": file.filename}})
 
         return f"Upload Failed: {str(e)}", 400
 
