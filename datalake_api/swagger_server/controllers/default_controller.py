@@ -475,17 +475,7 @@ def upload_post(file, json_data, **kwargs):
     db = client[mongo_db_name]
     collection = db[mongo_collection_name]
 
-    # Initialize transactional behavior flag
-    success = False
-
-    # Flag to check if a file replacement occurred
-    file_replacement = False
-
     try:
-        # file_path = env_config.get("LOCAL_FOLDER", default="/home/centos/dtaas_test_api/COCO_dataset")
-        # with open(os.path.join(file_path, file.filename), "wb") as f:
-        #     f.write(file.read())
-
         # NOTE: S3 credentials must be saved in ~/.aws/config file
         s3: boto3.Session.client = boto3.client(
             service_name="s3",
@@ -493,7 +483,7 @@ def upload_post(file, json_data, **kwargs):
         )
 
         response = s3.upload_file(
-            Filename=f"/home/centos/upload/{file.filename}",
+            Filename=f"/home/centos/UPLOAD/{file.filename}",
             Bucket=env_config.get("BUCKET"),
             Key=file.filename,
         )
@@ -527,6 +517,12 @@ def upload_post(file, json_data, **kwargs):
             )
         else:
             return "File Upload Successful, Metadata upload Successful ", 201
+
+    except boto3.exceptions.S3UploadFailedError:
+        return (
+            f"Upload Failed, entry likely already present. Please use the update_entry method. Error message: {str(e)}",
+            400,
+        )
 
     except Exception as e:
         # Undo actions if one of them fails
