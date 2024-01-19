@@ -502,15 +502,15 @@ def upload_post(file, json_data, **kwargs):
         # Properly read json_data and insert it into MongoDB
         json_data_str = json_data.read().decode("utf-8")
         json_data_list = json.loads(json_data_str)
+        json_data_list["s3_key"] = file.filename
 
-        paths_to_check = [doc.get("path", "") for doc in json_data_list]
-        existing_entry = collection.find_one({"path": {"$in": paths_to_check}})
+        existing_entry = collection.find_one({"s3_key": {"$in": file.filename}})
 
         if existing_entry:
             for doc in json_data_list:
-                if collection.find_one({"path": doc.get("path")}):
+                if collection.find_one({"s3_key": file.filename}):
                     print(
-                        f"Path metadata already present in the collection --> Metadata is NOT update, File data is possibly replacing an existing file associate with path= {doc['path']}"
+                        f"Entry already present in the collection --> Metadata is NOT update, File data is possibly replacing an existing file associate with key = {file.filename}"
                     )
                     json_data_list.remove(doc)
                     file_replacement = True
