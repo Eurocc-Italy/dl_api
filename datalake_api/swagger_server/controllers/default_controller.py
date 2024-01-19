@@ -25,7 +25,7 @@ import subprocess
 from tempfile import mkdtemp
 from sh import pushd  # Import pushd from the sh library
 
-import boto3
+import boto3, botocore
 
 DOTENV_FILE = "/home/centos/.env"
 env_config = Config(RepositoryEnv(DOTENV_FILE))
@@ -114,10 +114,12 @@ def download_id_get(file_name, **kwargs):  # noqa: E501
             Key=file_name,
         )
 
-        return f"Download successful. File is available at: /home/centos/DOWNLOAD/{file_name}", 200
+        return f"Download successful. File is available at: /home/centos/DOWNLOAD/{file_name}\n", 200
 
         # return send_file(f"/home/centos/DOWNLOAD/{file_name}", as_attachment=True), 200
-        # return "File not found", 404
+
+    except botocore.exceptions.ClientError:
+        return "File not found", 404
 
     except Exception as e:
         print(f"An error occurred: {e}")
