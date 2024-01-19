@@ -82,7 +82,7 @@ def is_valid_file_path(path):
 def download_id_get(id_, **kwargs):  # noqa: E501
     """
     Download a file
-    :param id_: File path
+    :param id_: File name
     :type id_: str
     :rtype: None
     """
@@ -99,24 +99,23 @@ def download_id_get(id_, **kwargs):  # noqa: E501
         # Handle cases where the Authorization header is missing or improperly formatted
         return {"message": "Unauthorized: Token missing or malformed"}, 401
 
-    unique_id = str(uuid.uuid4().hex)
-    logger.info("API call to %s", "download_id_get", extra={"uuid": unique_id, "token": token})
+    logger.info("API call to %s", "download_id_get", extra={"filename": id_, "token": token})
 
     try:
-        # Validate the file path format
-        if not is_valid_file_path(id_):
-            return "Invalid file path format", 400
-        # Check if the received path is an absolute path or relative to the current working directory
-        if os.path.isabs(id_):
-            file_path = id_
-        else:
-            file_path = os.path.join(os.getcwd(), id_)
+        # NOTE: S3 credentials must be saved in ~/.aws/config file
+        s3 = boto3.client(
+            service_name="s3",
+            endpoint_url="https://s3ds.g100st.cineca.it/",
+        )
 
+        s3.download_file(
+            Bucket=env_config.get("BUCKET"),
+            Filename=f"/home/centos/DOWNLOAD/{id_}",
+            Key=id_,
+        )
         # Check if the file exists before attempting to send it
-        if os.path.exists(file_path):
-            return send_file(file_path, as_attachment=True), 200
-        else:
-            return "File not found", 404
+        return send_file(f"/home/centos/DOWNLOAD/{id_}", as_attachment=True), 200
+        return "File not found", 404
 
     except Exception as e:
         print(f"An error occurred: {e}")
@@ -156,7 +155,7 @@ def delete_file(file_name, **kwargs):
 
         if existing_entry:
             # NOTE: S3 credentials must be saved in ~/.aws/config file
-            s3: boto3.Session.client = boto3.client(
+            s3 = boto3.client(
                 service_name="s3",
                 endpoint_url="https://s3ds.g100st.cineca.it/",
             )
@@ -463,7 +462,7 @@ def upload_post(file, json_data, **kwargs):
 
     try:
         # NOTE: S3 credentials must be saved in ~/.aws/config file
-        s3: boto3.Session.client = boto3.client(
+        s3 = boto3.client(
             service_name="s3",
             endpoint_url="https://s3ds.g100st.cineca.it/",
         )
