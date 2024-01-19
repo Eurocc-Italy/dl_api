@@ -161,7 +161,7 @@ def delete_file(file_name, **kwargs):
                 endpoint_url="https://s3ds.g100st.cineca.it/",
             )
 
-            s3.delete_file(
+            s3.delete_object(
                 Bucket=env_config.get("BUCKET"),
                 Key=file_name,
             )
