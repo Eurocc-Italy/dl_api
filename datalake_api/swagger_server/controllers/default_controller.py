@@ -123,7 +123,7 @@ def download_id_get(id_, **kwargs):  # noqa: E501
         return "Internal Server Error", 500
 
 
-def delete_file(file_path, **kwargs):
+def delete_file(s3_key, **kwargs):
     # Information printed for system log
     print("Dictionary with token info:")
     print(kwargs)
@@ -136,8 +136,7 @@ def delete_file(file_path, **kwargs):
         # Handle cases where the Authorization header is missing or improperly formatted
         return {"message": "Unauthorized: Token missing or malformed"}, 401
 
-    unique_id = str(uuid.uuid4().hex)
-    logger.info("API call to %s", "delete_id_get", extra={"uuid": unique_id, "token": token})
+    logger.info("API call to %s", "delete_id_get", extra={"S3 Key": s3_key, "token": token})
 
     # Initialize MongoDB client with decouple
     mongo_host = env_config.get("MONGO_HOST", default="localhost")
@@ -150,36 +149,24 @@ def delete_file(file_path, **kwargs):
     collection = db[mongo_collection_name]
 
     try:
-        # Validate the file path format
-        if not is_valid_file_path(file_path):
-            return "Invalid file path format", 400
-
-        # Check if the received path is an absolute path or relative to the current working directory
-        if os.path.isabs(file_path):
-            absolute_path = file_path
-        else:
-            absolute_path = os.path.join(os.getcwd(), file_path)
-        # Debug print: Output the absolute_path
-        print(f"Debug: absolute_path = {absolute_path}")
-
-        # Create a JSON-like object for MongoDB query
-        paths_to_check = [f"{absolute_path}"]
-
-        # Debug print: Output the paths_to_check before MongoDB query
-        print(f"Debug: paths_to_check before query = {paths_to_check}")
-
-        existing_entry = collection.find_one({"path": {"$in": paths_to_check}})
+        existing_entry = collection.find_one({"s3_key": s3_key})
 
         # Debug print: Output the existing_entry after MongoDB query
         print(f"Debug: existing_entry after query = {existing_entry}")
 
         if existing_entry:
-            # Delete the file from the filesystem
-            if os.path.exists(absolute_path):
-                os.remove(absolute_path)
+            # NOTE: S3 credentials must be saved in ~/.aws/config file
+            s3: boto3.Session.client = boto3.client(
+                service_name="s3",
+                endpoint_url="https://s3ds.g100st.cineca.it/",
+            )
 
-            # Remove the entry from the MongoDB collection
-            result = collection.delete_one({"path": {"$in": paths_to_check}})
+            s3.delete_file(
+                Bucket=env_config.get("BUCKET"),
+                Key=s3_key,
+            )
+
+            result = collection.delete_one({"s3_key": s3_key})
 
             if result.deleted_count:
                 return "File and its database entry deleted successfully", 200
