@@ -114,7 +114,9 @@ def download_id_get(file_name, **kwargs):  # noqa: E501
             Key=file_name,
         )
 
-        return send_file(f"/home/centos/DOWNLOAD/{file_name}", as_attachment=True), 200
+        return f"Download successful. File is available at: /home/centos/DOWNLOAD/{file_name}", 200
+
+        # return send_file(f"/home/centos/DOWNLOAD/{file_name}", as_attachment=True), 200
         # return "File not found", 404
 
     except Exception as e:
