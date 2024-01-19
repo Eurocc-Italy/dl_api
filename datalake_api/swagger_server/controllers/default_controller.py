@@ -339,16 +339,16 @@ def replace_entry(path, file=None, json_data=None, **kwargs):  # noqa: E501###
             # Step 2: Insert json_data into MongoDB
         # Properly read json_data and insert it into MongoDB
         json_data_str = json_data.read().decode("utf-8")
-        json_data_list = json.loads(json_data_str)
+        json_data_dict = json.loads(json_data_str)
 
-        paths_to_check = [doc.get("path", "") for doc in json_data_list]
+        paths_to_check = [doc.get("path", "") for doc in json_data_dict]
         existing_entry = collection.find_one({"path": {"$in": paths_to_check}})
 
         if existing_entry:
-            for doc in json_data_list:
+            for doc in json_data_dict:
                 if collection.find_one_and_update({"path": doc.get("path")}, {"$set": doc}):
                     print(f"Metadata updated,for path= {doc['path']}")
-                    json_data_list.remove(doc)
+                    json_data_dict.remove(doc)
 
         # Step 3: Replace file in local folder if file is provided
         if file:
@@ -426,16 +426,16 @@ def update_entry(path, file=None, **kwargs):  # noqa: E501
         # Step 2: Insert json_data into MongoDB
         # Properly read json_data and insert it into MongoDB
         json_data_str = file.read().decode("utf-8")
-        json_data_list = json.loads(json_data_str)
+        json_data_dict = json.loads(json_data_str)
 
-        paths_to_check = [doc.get("path", "") for doc in json_data_list]
+        paths_to_check = [doc.get("path", "") for doc in json_data_dict]
         existing_entry = collection.find_one({"path": {"$in": paths_to_check}})
 
         if existing_entry:
-            for doc in json_data_list:
+            for doc in json_data_dict:
                 if collection.find_one_and_update({"path": doc.get("path")}, {"$set": doc}):
                     print(f"Metadata updated,for path= {doc['path']}")
-                    json_data_list.remove(doc)
+                    json_data_dict.remove(doc)
                     file_replacement = True
 
         # Step 3: Success message
@@ -484,8 +484,8 @@ def upload_post(file, json_data, **kwargs):
         # Step 2: Insert json_data into MongoDB
         # Properly read json_data and insert it into MongoDB
         json_data_str = json_data.read().decode("utf-8")
-        json_data_list = json.loads(json_data_str)
-        json_data_list["s3_key"] = file.filename
+        json_data_dict = json.loads(json_data_str)
+        json_data_dict["s3_key"] = file.filename
 
         if collection.find_one({"s3_key": file.filename}):
             return f"Upload Failed, entry is already present. Please use POST method to update an existing entry", 400
@@ -495,7 +495,7 @@ def upload_post(file, json_data, **kwargs):
             Bucket=env_config.get("BUCKET"),
             Key=file.filename,
         )
-        collection.insert_one(json_data_list)
+        collection.insert_one(json_data_dict)
 
         # Step 3: Success message
         return ("File and Metadata upload successful.", 201)
@@ -512,8 +512,8 @@ def upload_post(file, json_data, **kwargs):
         #     os.remove(os.path.join(file_path, file.filename))
 
         # This assumes that all inserted documents have a unique 'path'
-        if "json_data_list" in locals():
-            # paths_to_remove = [doc.get("s3_key", "") for doc in json_data_list]
+        if "json_data_dict" in locals():
+            # paths_to_remove = [doc.get("s3_key", "") for doc in json_data_dict]
             collection.delete_one({"s3_key": file.filename})
 
         return f"Upload Failed: {str(e)}", 400
