@@ -490,18 +490,14 @@ def upload_post(file, json_data, **kwargs):
         s3: boto3.Session.client = boto3.client(
             service_name="s3",
             endpoint_url="https://s3ds.g100st.cineca.it/",
+            region="cinecahpc",
         )
 
-        os.makedirs("tmp")
-        with pushd("tmp"):
-            with open(file.filename, "wb") as f:
-                f.write(file.read())
-            response = s3.upload_file(
-                Filename=file.filename,
-                Bucket=env_config.get("BUCKET"),
-                Key=file.filename,
-            )
-        shutil.rmtree("tmp")
+        response = s3.upload_file(
+            Filename=f"/home/centos/upload/{file.filename}",
+            Bucket=env_config.get("BUCKET"),
+            Key=file.filename,
+        )
 
         # Step 2: Insert json_data into MongoDB
         # Properly read json_data and insert it into MongoDB
