@@ -97,7 +97,7 @@ def download_id_get(file_name, **kwargs):  # noqa: E501
         token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
     else:
         # Handle cases where the Authorization header is missing or improperly formatted
-        return {"message": "Unauthorized: Token missing or malformed"}, 401
+        return {"message": "Unauthorized: Token missing or malformed\n"}, 401
 
     logger.info("API call to %s", "download_id_get", extra={"File": file_name, "token": token})
 
@@ -119,11 +119,11 @@ def download_id_get(file_name, **kwargs):  # noqa: E501
         # return send_file(f"/home/centos/DOWNLOAD/{file_name}", as_attachment=True), 200
 
     except botocore.exceptions.ClientError:
-        return "File not found", 404
+        return "File not found\n", 404
 
     except Exception as e:
         print(f"An error occurred: {e}")
-        return "Internal Server Error", 500
+        return "Internal Server Error\n", 500
 
 
 def delete_file(file_name, **kwargs):
@@ -137,7 +137,7 @@ def delete_file(file_name, **kwargs):
         token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
     else:
         # Handle cases where the Authorization header is missing or improperly formatted
-        return {"message": "Unauthorized: Token missing or malformed"}, 401
+        return {"message": "Unauthorized: Token missing or malformed\n"}, 401
 
     logger.info("API call to %s", "delete_id_get", extra={"File": file_name, "token": token})
 
@@ -172,13 +172,13 @@ def delete_file(file_name, **kwargs):
             result = collection.delete_one({"s3_key": file_name})
 
             if result.deleted_count:
-                return "File and its database entry deleted successfully", 200
+                return "File and its database entry deleted successfully\n", 200
             else:
-                return "Failed to delete file or its database entry", 400
+                return "Failed to delete file or its database entry\n", 400
         else:
-            return "File path not found in the database", 404
+            return "File path not found in the database\n", 404
     except Exception as e:
-        return f"An error occurred: {str(e)}", 500
+        return f"An error occurred: {str(e)}\n", 500
 
 
 def query_post(query_file, python_file=None, config_json=None, **kwargs):
@@ -193,7 +193,7 @@ def query_post(query_file, python_file=None, config_json=None, **kwargs):
         token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
     else:
         # Handle cases where the Authorization header is missing or improperly formatted
-        return {"message": "Unauthorized: Token missing or malformed"}, 401
+        return {"message": "Unauthorized: Token missing or malformed\n"}, 401
 
     unique_id = str(uuid.uuid4().hex)
     logger.info("API call to %s", "query_post", extra={"uuid": unique_id, "token": token})
@@ -201,7 +201,7 @@ def query_post(query_file, python_file=None, config_json=None, **kwargs):
     try:
         # Ensure the query file and config JSON are provided
         if not query_file:
-            return "Missing query file or configuration", 400
+            return "Missing query file or configuration\n", 400
 
         if config_json:
             # Parse the configuration JSON
@@ -252,10 +252,10 @@ def query_post(query_file, python_file=None, config_json=None, **kwargs):
                 stderr=subprocess.PIPE,
             ).communicate()
         shutil.rmtree(tdir)
-        return f"Files processed successfully, ID: {unique_id}", 200
+        return f"Files processed successfully, ID: {unique_id}\n", 200
 
     except Exception as e:
-        return f"An error occurred: {str(e)}", 500
+        return f"An error occurred: {str(e)}\n", 500
 
 
 def replace_entry(path, file=None, json_data=None, **kwargs):  # noqa: E501###
@@ -270,7 +270,7 @@ def replace_entry(path, file=None, json_data=None, **kwargs):  # noqa: E501###
         token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
     else:
         # Handle cases where the Authorization header is missing or improperly formatted
-        return {"message": "Unauthorized: Token missing or malformed"}, 401
+        return {"message": "Unauthorized: Token missing or malformed\n"}, 401
 
     unique_id = str(uuid.uuid4().hex)
     logger.info("API call to %s", "replace_entry", extra={"uuid": unique_id, "token": token})
@@ -324,7 +324,7 @@ def replace_entry(path, file=None, json_data=None, **kwargs):  # noqa: E501###
         print(f"Debug: existing_entry = {existing_entry}")
 
         if not existing_entry:
-            return "Entry not found for the given path", 404
+            return "Entry not found for the given path\n", 404
 
             # Step 2: Insert json_data into MongoDB
         # Properly read json_data and insert it into MongoDB
@@ -346,15 +346,15 @@ def replace_entry(path, file=None, json_data=None, **kwargs):  # noqa: E501###
             print(f"Debug: local_file_path = {local_file_path}")
 
             if not os.path.exists(local_file_path):
-                return "Local file not found for the existing entry", 404
+                return "Local file not found for the existing entry\n", 404
 
             with open(local_file_path, "wb") as f:
                 f.write(file.read())
 
-        return "File updated succesfully, if metadata for file was included this has been updated", 200
+        return "File updated succesfully, if metadata for file was included this has been updated\n", 200
 
     except Exception as e:
-        return f"An error occurred: {str(e)}", 500
+        return f"An error occurred: {str(e)}\n", 500
 
 
 def update_entry(path, file=None, **kwargs):  # noqa: E501
@@ -369,7 +369,7 @@ def update_entry(path, file=None, **kwargs):  # noqa: E501
         token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
     else:
         # Handle cases where the Authorization header is missing or improperly formatted
-        return {"message": "Unauthorized: Token missing or malformed"}, 401
+        return {"message": "Unauthorized: Token missing or malformed\n"}, 401
 
     unique_id = str(uuid.uuid4().hex)
     logger.info("API call to %s", "update_entry", extra={"uuid": unique_id, "token": token})
@@ -411,7 +411,7 @@ def update_entry(path, file=None, **kwargs):  # noqa: E501
         print(f"Debug: Existing entry = {existing_entry}")
 
         if not existing_entry:
-            return "Entry not found for the given path", 404
+            return "Entry not found for the given path\n", 404
 
         # Step 2: Insert json_data into MongoDB
         # Properly read json_data and insert it into MongoDB
@@ -430,12 +430,12 @@ def update_entry(path, file=None, **kwargs):  # noqa: E501
 
         # Step 3: Success message
         if file_replacement:
-            return "Metadata is Updated Succesfully", 201
+            return "Metadata is Updated Succesfully\n", 201
         else:
-            return "Metadata not replaced ", 400
+            return "Metadata not replaced\n", 400
 
     except Exception as e:
-        return f"An error occurred: {str(e)}", 500
+        return f"An error occurred: {str(e)}\n", 500
 
 
 def upload_post(file, json_data, **kwargs):
@@ -450,7 +450,7 @@ def upload_post(file, json_data, **kwargs):
         token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
     else:
         # Handle cases where the Authorization header is missing or improperly formatted
-        return {"message": "Unauthorized: Token missing or malformed"}, 401
+        return {"message": "Unauthorized: Token missing or malformed\n"}, 401
 
     logger.info("API call to %s", "upload_post", extra={"File": file.filename, "token": token})
 
@@ -478,7 +478,7 @@ def upload_post(file, json_data, **kwargs):
         json_data_dict["s3_key"] = file.filename
 
         if collection.find_one({"s3_key": file.filename}):
-            return f"Upload Failed, entry is already present. Please use POST method to update an existing entry", 400
+            return f"Upload Failed, entry is already present. Please use POST method to update an existing entry\n", 400
 
         s3.upload_file(
             Filename=f"/home/centos/UPLOAD/{file.filename}",
@@ -492,7 +492,7 @@ def upload_post(file, json_data, **kwargs):
 
     except boto3.exceptions.S3UploadFailedError:
         return (
-            f"Upload Failed, entry likely already present. Please use the update_entry method. Error message: {str(e)}",
+            f"Upload Failed, entry likely already present. Please use the update_entry method. Error message: {str(e)}\n",
             400,
         )
 
@@ -506,7 +506,7 @@ def upload_post(file, json_data, **kwargs):
             # paths_to_remove = [doc.get("s3_key", "") for doc in json_data_dict]
             collection.delete_one({"s3_key": file.filename})
 
-        return f"Upload Failed: {str(e)}", 400
+        return f"Upload Failed: {str(e)}\n", 400
 
 
 def get_config(**kwargs):
@@ -521,7 +521,7 @@ def get_config(**kwargs):
     #    token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
     # else:
     #    # Handle cases where the Authorization header is missing or improperly formatted
-    #    return {"message": "Unauthorized: Token missing or malformed"}, 401
+    #    return {"message": "Unauthorized: Token missing or malformed\n"}, 401
     #
     # unique_id = str(uuid.uuid4().hex)
     # logger.info('API call to %s', 'get_config', extra={'uuid': unique_id, 'token': token})
@@ -533,10 +533,10 @@ def get_config(**kwargs):
     #            config_data = json.load(file)
     #        return config_data, 200
     #    else:
-    #        return {"error": "Configuration not found"}, 404
+    #        return {"error": "Configuration not found\n"}, 404
     # except Exception as e:
     #    return {"error": str(e)}, 500
-    return print("out of service for now")
+    return print("out of service for now\n")
 
 
 def update_config(**kwargs):
@@ -551,7 +551,7 @@ def update_config(**kwargs):
     #    token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
     # else:
     #    # Handle cases where the Authorization header is missing or improperly formatted
-    #    return {"message": "Unauthorized: Token missing or malformed"}, 401
+    #    return {"message": "Unauthorized: Token missing or malformed\n"}, 401
     #
     # unique_id = str(uuid.uuid4().hex)
     # logger.info('API call to %s', 'update_config', extra={'uuid': unique_id, 'token': token})
@@ -560,7 +560,7 @@ def update_config(**kwargs):
     # try:
     #    # Extract new_config from the request
     #    if 'new_config' not in request.files:
-    #        return {"error": "new_config file not provided"}, 400
+    #        return {"error": "new_config file not provided\n"}, 400
     #
     #    new_config_file = request.files['new_config']
     #    new_config = json.load(new_config_file)
@@ -568,10 +568,10 @@ def update_config(**kwargs):
     #    # Update the configuration
     #    with open(config_file_path, 'w') as file:
     #        json.dump(new_config, file, indent=4)
-    #    return {"message": "Configuration updated successfully"}, 200
+    #    return {"message": "Configuration updated successfully\n"}, 200
     #
     # except json.JSONDecodeError as e:
-    #    return {"error": f"Invalid JSON format: {str(e)}"}, 400
+    #    return {"error": f"Invalid JSON format: {str(e)}\n"}, 400
     # except Exception as e:
     #    return {"error": str(e)}, 500
-    return print("out of service for now")
+    return print("out of service for now\n")
