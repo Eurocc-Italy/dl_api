@@ -497,6 +497,7 @@ def upload_post(file, json_data, **kwargs):
             Bucket=env_config.get("BUCKET"),
             Key=file.filename,
         )
+        print(f"S3 response: {response}")
 
         # Step 2: Insert json_data into MongoDB
         # Properly read json_data and insert it into MongoDB
@@ -534,8 +535,8 @@ def upload_post(file, json_data, **kwargs):
 
         # This assumes that all inserted documents have a unique 'path'
         if "json_data_list" in locals():
-            paths_to_remove = [doc.get("path", "") for doc in json_data_list]
-            collection.delete_many({"path": {"$in": paths_to_remove}})
+            paths_to_remove = [doc.get("s3_key", "") for doc in json_data_list]
+            collection.delete_many({"s3_key": {"$in": paths_to_remove}})
 
         return f"Upload Failed: {str(e)}", 400
 
