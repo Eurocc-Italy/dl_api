@@ -105,7 +105,7 @@ def download_id_get(file_name, **kwargs):  # noqa: E501
         # NOTE: S3 credentials must be saved in ~/.aws/config file
         s3 = boto3.client(
             service_name="s3",
-            endpoint_url="https://s3ds.g100st.cineca.it/",
+            endpoint_url=env_config("S3_ENDPOINT_URL"),  #"https://s3ds.g100st.cineca.it/"
         )
 
         s3.download_file(
@@ -161,7 +161,7 @@ def delete_file(file_name, **kwargs):
             # NOTE: S3 credentials must be saved in ~/.aws/config file
             s3 = boto3.client(
                 service_name="s3",
-                endpoint_url="https://s3ds.g100st.cineca.it/",
+                endpoint_url=env_config("S3_ENDPOINT_URL"),  #"https://s3ds.g100st.cineca.it/",
             )
 
             s3.delete_object(
@@ -468,7 +468,7 @@ def upload_post(file, json_data, **kwargs):
         # NOTE: S3 credentials must be saved in ~/.aws/config file
         s3 = boto3.client(
             service_name="s3",
-            endpoint_url="https://s3ds.g100st.cineca.it/",
+            endpoint_url=env_config("S3_ENDPOINT_URL")  #"https://s3ds.g100st.cineca.it/",
         )
 
         # Step 2: Insert json_data into MongoDB
