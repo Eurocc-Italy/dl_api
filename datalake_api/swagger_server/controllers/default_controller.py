@@ -481,7 +481,7 @@ def upload_post(file, json_data, **kwargs):
             return f"Upload Failed, entry is already present. Please use POST method to update an existing entry\n", 400
 
         s3.upload_file(
-            Filename=f"/home/centos/UPLOAD/files/{file.filename}",
+            Filename=f"/home/centos/UPLOAD/FILES/{file.filename}",
             Bucket=env_config.get("S3_BUCKET"),
             Key=file.filename,
         )
