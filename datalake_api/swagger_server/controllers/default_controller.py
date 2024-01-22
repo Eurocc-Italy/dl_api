@@ -105,11 +105,11 @@ def download_id_get(file_name, **kwargs):  # noqa: E501
         # NOTE: S3 credentials must be saved in ~/.aws/config file
         s3 = boto3.client(
             service_name="s3",
-            endpoint_url="https://s3ds.g100st.cineca.it/",
+            endpoint_url=env_config.get("S3_ENDPOINT_URL"),
         )
 
         s3.download_file(
-            Bucket=env_config.get("BUCKET"),
+            Bucket=env_config.get("S3_BUCKET"),
             Filename=f"/home/centos/DOWNLOAD/{file_name}",
             Key=file_name,
         )
@@ -161,11 +161,11 @@ def delete_file(file_name, **kwargs):
             # NOTE: S3 credentials must be saved in ~/.aws/config file
             s3 = boto3.client(
                 service_name="s3",
-                endpoint_url="https://s3ds.g100st.cineca.it/",
+                endpoint_url=env_config.get("S3_ENDPOINT_URL"),
             )
 
             s3.delete_object(
-                Bucket=env_config.get("BUCKET"),
+                Bucket=env_config.get("S3_BUCKET"),
                 Key=file_name,
             )
 
@@ -468,7 +468,7 @@ def upload_post(file, json_data, **kwargs):
         # NOTE: S3 credentials must be saved in ~/.aws/config file
         s3 = boto3.client(
             service_name="s3",
-            endpoint_url="https://s3ds.g100st.cineca.it/",
+            endpoint_url=env_config.get("S3_ENDPOINT_URL"),
         )
 
         # Step 2: Insert json_data into MongoDB
@@ -481,8 +481,8 @@ def upload_post(file, json_data, **kwargs):
             return f"Upload Failed, entry is already present. Please use POST method to update an existing entry\n", 400
 
         s3.upload_file(
-            Filename=f"/home/centos/UPLOAD/{file.filename}",
-            Bucket=env_config.get("BUCKET"),
+            Filename=f"/home/centos/UPLOAD/files/{file.filename}",
+            Bucket=env_config.get("S3_BUCKET"),
             Key=file.filename,
         )
         collection.insert_one(json_data_dict)
