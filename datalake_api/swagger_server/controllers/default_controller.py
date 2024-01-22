@@ -478,7 +478,7 @@ def upload_post(file, json_data, **kwargs):
         json_data_dict["s3_key"] = file.filename
 
         if collection.find_one({"s3_key": file.filename}):
-            return f"Upload Failed, entry is already present. Please use POST method to update an existing entry", 400
+            return f"Upload Failed, entry is already present. Please use PUT method to update an existing entry", 400
 
         s3.upload_file(
             Filename=f"/home/centos/UPLOAD/FILES/{file.filename}",
