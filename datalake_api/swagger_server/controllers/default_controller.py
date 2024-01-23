@@ -251,7 +251,7 @@ def query_post(query_file, python_file=None, config_json=None, **kwargs):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             ).communicate()
-        shutil.rmtree(tdir)
+        # shutil.rmtree(tdir)
         return f"Files processed successfully, ID: {unique_id}", 200
 
     except Exception as e:
