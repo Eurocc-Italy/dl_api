@@ -476,6 +476,7 @@ def upload_post(file, json_data, **kwargs):
         json_data_str = json_data.read().decode("utf-8")
         json_data_dict = json.loads(json_data_str)
         json_data_dict["s3_key"] = file.filename
+        json_data_dict["pfs_path"] = f"{env_config.get('PFS_PATH_PREFIX')}{env_config.get('S3_BUCKET')}/{file.filename}"
 
         if collection.find_one({"s3_key": file.filename}):
             return f"Upload Failed, entry is already present. Please use PUT method to update an existing entry", 400
