@@ -482,7 +482,7 @@ def upload_post(file, json_data, **kwargs):
             return f"Upload Failed, entry is already present. Please use PUT method to update an existing entry", 400
 
         s3.upload_file(
-            Filename=file.filename,
+            Filename=f"/home/lbabetto/test/{file.filename}",
             Bucket=env_config.get("S3_BUCKET"),
             Key=file.filename,
         )
