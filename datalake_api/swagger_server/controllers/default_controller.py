@@ -497,12 +497,11 @@ def upload_post(file, json_data, **kwargs):
 
         # NOTE: upload_file was changes to upload_fileobject
         # if file is necessary to TUI it might be useful to recover also upload_file
-        response = s3.upload_fileobj(
+        s3.upload_file(
             Fileobj=file,
             Bucket=env_config.get("S3_BUCKET"),
             Key=file.filename,
         )
-        print(response)
         collection.insert_one(json_data_dict)
 
         # Step 3: Success message
