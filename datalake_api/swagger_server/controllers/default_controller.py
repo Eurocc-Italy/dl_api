@@ -495,6 +495,7 @@ def upload_post(file, json_data, **kwargs):
         if collection.find_one({"s3_key": file.filename}):
             return f"Upload Failed, entry is already present. Please use PUT method to update an existing entry", 400
 
+        print("HERE")
         # NOTE: upload_file was changes to upload_fileobject
         # if file is necessary to TUI it might be useful to recover also upload_file
         s3.upload_fileobj(
