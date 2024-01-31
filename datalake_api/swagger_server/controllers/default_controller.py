@@ -457,7 +457,7 @@ def upload_post(file, json_data, **kwargs):
     print("Dictionary with token info:")
     print(kwargs)
 
-    print(file.__dict__)
+    print(file.stream)
 
     # Extract the token from the Authorization header
     auth_header = request.headers.get("Authorization")
