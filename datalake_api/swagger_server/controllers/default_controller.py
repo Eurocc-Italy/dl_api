@@ -457,8 +457,6 @@ def upload_post(file, json_data, **kwargs):
     print("Dictionary with token info:")
     print(kwargs)
 
-    print(file.stream)
-
     # Extract the token from the Authorization header
     auth_header = request.headers.get("Authorization")
 
@@ -500,7 +498,7 @@ def upload_post(file, json_data, **kwargs):
         # NOTE: upload_file was changes to upload_fileobject
         # if file is necessary to TUI it might be useful to recover also upload_file
         s3.upload_fileobj(
-            Fileobj=file,
+            Fileobj=file.stream,
             Bucket=env_config.get("S3_BUCKET"),
             Key=file.filename,
         )
