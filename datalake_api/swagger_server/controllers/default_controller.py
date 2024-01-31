@@ -109,35 +109,28 @@ def download_id_get(file_name, **kwargs):  # noqa: E501
         )
 
         ## NOTE: if TUI requires Downlaod in VM, It might be necessary to uncomment below
-        #s3.download_file(
+        # s3.download_file(
         #    Bucket=env_config.get("S3_BUCKET"),
         #    Filename=f"/home/centos/DOWNLOAD/{file_name}",
         #    Key=file_name,
-        #)
-        #return f"Download successful. File is available at: /home/centos/DOWNLOAD/{file_name}\n", 200
-        
-        #Get object from bucket
-        s3_object = s3.get_object(
-            Bucket=env_config.get("S3_BUCKET"),
-             Key=file_name
-             )
-             
-        
+        # )
+        # return f"Download successful. File is available at: /home/centos/DOWNLOAD/{file_name}\n", 200
+
+        # Get object from bucket
+        s3_object = s3.get_object(Bucket=env_config.get("S3_BUCKET"), Key=file_name)
+
         # Stream the file directly from S3 to the client
         def generate():
-            for chunk in s3_object['Body'].iter_chunks(chunk_size=4096):
+            for chunk in s3_object["Body"].iter_chunks(chunk_size=4096):
                 yield chunk
 
-        return Response(generate(), content_type=s3_object['ContentType'])
-
-
-        
+        return Response(generate(), content_type=s3_object["ContentType"])
 
         # return send_file(f"/home/centos/DOWNLOAD/{file_name}", as_attachment=True), 200
 
     except botocore.exceptions.ClientError as e:
         # Handle specific S3 client errors (e.g., file not found)
-        if e.response['Error']['Code'] == "NoSuchKey":
+        if e.response["Error"]["Code"] == "NoSuchKey":
             return "File not found\n", 404
         else:
             return "S3 Client Error\n", 500
@@ -464,6 +457,8 @@ def upload_post(file, json_data, **kwargs):
     print("Dictionary with token info:")
     print(kwargs)
 
+    print(file)
+
     # Extract the token from the Authorization header
     auth_header = request.headers.get("Authorization")
 
@@ -502,8 +497,8 @@ def upload_post(file, json_data, **kwargs):
         if collection.find_one({"s3_key": file.filename}):
             return f"Upload Failed, entry is already present. Please use PUT method to update an existing entry", 400
 
-        #NOTE: upload_file was changes to upload_fileobject
-        #if file is necessary to TUI it might be useful to recover also upload_file
+        # NOTE: upload_file was changes to upload_fileobject
+        # if file is necessary to TUI it might be useful to recover also upload_file
         s3.upload_fileobj(
             Fileobj=file,
             Bucket=env_config.get("S3_BUCKET"),
