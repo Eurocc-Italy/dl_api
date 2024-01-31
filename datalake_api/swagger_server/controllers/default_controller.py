@@ -121,7 +121,7 @@ def download_id_get(file_name, **kwargs):  # noqa: E501
         s3_object = s3.get_object(Bucket=env_config.get("S3_BUCKET"), Key=file_name)
 
         # Stream the file directly from S3 to the client
-        #def generate():
+        # def generate():
         #    for chunk in s3_object["Body"].iter_chunks(chunk_size=4096):
         #        yield chunk
         # return Response(generate(), content_type=s3_object["ContentType"])
@@ -129,12 +129,10 @@ def download_id_get(file_name, **kwargs):  # noqa: E501
         # return send_file(f"/home/centos/DOWNLOAD/{file_name}", as_attachment=True), 200
 
         # Read the entire file content
-        file_content = s3_object['Body'].read()
+        file_content = s3_object["Body"].read()
 
-        return Response(file_content, content_type=s3_object['ContentType'])
+        return Response(file_content, content_type=s3_object["ContentType"])
 
-    
-    
     except botocore.exceptions.ClientError as e:
         # Handle specific S3 client errors (e.g., file not found)
         if e.response["Error"]["Code"] == "NoSuchKey":
@@ -501,15 +499,13 @@ def upload_post(file, json_data, **kwargs):
 
         if collection.find_one({"s3_key": file.filename}):
             return f"Upload Failed, entry is already present. Please use PUT method to update an existing entry", 400
-        
+
         # Read file content into a binary stream
-        file_content = file.read()
-        file_stream = BytesIO(file_content)
-        
+
         # NOTE: upload_file was changes to upload_fileobject
         # if file is necessary to TUI it might be useful to recover also upload_file
         s3.upload_fileobj(
-            Fileobj=file_stream,
+            Fileobj=file,
             Bucket=env_config.get("S3_BUCKET"),
             Key=file.filename,
         )
