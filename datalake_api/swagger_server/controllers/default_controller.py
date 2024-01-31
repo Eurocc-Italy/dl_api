@@ -120,14 +120,20 @@ def download_id_get(file_name, **kwargs):  # noqa: E501
         s3_object = s3.get_object(Bucket=env_config.get("S3_BUCKET"), Key=file_name)
 
         # Stream the file directly from S3 to the client
-        def generate():
-            for chunk in s3_object["Body"].iter_chunks(chunk_size=4096):
-                yield chunk
-
-        return Response(generate(), content_type=s3_object["ContentType"])
+        #def generate():
+        #    for chunk in s3_object["Body"].iter_chunks(chunk_size=4096):
+        #        yield chunk
+        # return Response(generate(), content_type=s3_object["ContentType"])
 
         # return send_file(f"/home/centos/DOWNLOAD/{file_name}", as_attachment=True), 200
 
+        # Read the entire file content
+        file_content = s3_object['Body'].read()
+
+        return Response(file_content, content_type=s3_object['ContentType'])
+
+    
+    
     except botocore.exceptions.ClientError as e:
         # Handle specific S3 client errors (e.g., file not found)
         if e.response["Error"]["Code"] == "NoSuchKey":
