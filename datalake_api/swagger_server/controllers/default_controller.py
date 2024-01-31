@@ -1,5 +1,6 @@
 import connexion
 import six
+from io import BytesIO
 
 from swagger_server.models.asset import Asset  # noqa: E501
 from swagger_server import util
@@ -500,11 +501,15 @@ def upload_post(file, json_data, **kwargs):
 
         if collection.find_one({"s3_key": file.filename}):
             return f"Upload Failed, entry is already present. Please use PUT method to update an existing entry", 400
-
+        
+        # Read file content into a binary stream
+        file_content = file.read()
+        file_stream = BytesIO(file_content)
+        
         # NOTE: upload_file was changes to upload_fileobject
         # if file is necessary to TUI it might be useful to recover also upload_file
         s3.upload_fileobj(
-            Fileobj=file,
+            Fileobj=file_stream,
             Bucket=env_config.get("S3_BUCKET"),
             Key=file.filename,
         )
@@ -513,7 +518,7 @@ def upload_post(file, json_data, **kwargs):
         # Step 3: Success message
         return "File and Metadata upload successful.", 201
 
-    except boto3.exceptions.S3UploadFailedError:
+    except boto3.exceptions.S3UploadFailedError as e:
         return (
             f"Upload Failed, entry likely already present. Please use the update_entry method. Error message: {str(e)}",
             400,
