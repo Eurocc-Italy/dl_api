@@ -30,7 +30,6 @@ import boto3, botocore
 
 DOTENV_FILE = f"{os.getenv('HOME')}/.env"
 env_config = Config(RepositoryEnv(DOTENV_FILE))
-print(env_config)
 
 
 class CustomFormatter(logging.Formatter):
