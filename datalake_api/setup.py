@@ -19,6 +19,7 @@ REQUIRES = [
     "setuptools",
     "swagger-ui-bundle",
     "pymongo == 4.5.0",
+    "urllib3 == 1.26",
     "dtaas-tui @ git+https://gitlab.hpc.cineca.it/lbabetto/dtaas-tui",
     "boto3",
     "python-decouple",
