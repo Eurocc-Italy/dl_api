@@ -30,6 +30,8 @@ import boto3, botocore
 
 DOTENV_FILE = f"{os.getenv('HOME')}/.env"
 env_config = Config(RepositoryEnv(DOTENV_FILE))
+print(f"{env_config.get('S3_ENDPOINT_URL')}")
+print(f"{env_config.get('S3_BUCKET')}")
 
 
 class CustomFormatter(logging.Formatter):
