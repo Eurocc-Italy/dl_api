@@ -1,4 +1,5 @@
 from typing import List
+
 """
 controller generated to handled auth operation described at:
 https://connexion.readthedocs.io/en/latest/security.html
@@ -10,11 +11,18 @@ import connexion
 from jose import JWTError, jwt
 from werkzeug.exceptions import Unauthorized
 
+import os
+from decouple import Config, RepositoryEnv
+
+DOTENV_FILE = f"{os.getenv('HOME')}/.env"
+env_config = Config(RepositoryEnv(DOTENV_FILE))
+
 # Constants for JWT token generation and verification
-JWT_ISSUER = "cineca_or_ifab"
-JWT_SECRET = "samurai"  # Make sure to use a secure, unique secret in production
-JWT_LIFETIME_SECONDS = 600
-JWT_ALGORITHM = "HS256"
+JWT_ISSUER = env_config.get("JWT_ISSUER")
+JWT_SECRET = env_config.get("JWT_SECRET")
+JWT_LIFETIME_SECONDS = env_config.get("JWT_LIFETIME_SECONDS")
+JWT_ALGORITHM = env_config.get("JWT_ALGORITHM")
+
 
 def decode_token(token):
     try:
@@ -25,6 +33,7 @@ def decode_token(token):
         # Optionally, log the error details for debugging
         print(f"JWT Decode Error: {e}")
         raise Unauthorized from e
+
 
 def generate_token(user_id):
     timestamp = _current_timestamp()
@@ -37,13 +46,12 @@ def generate_token(user_id):
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 
-
 def get_secret(user, token_info) -> str:
     return f"""
     You are user_id {user} and the secret is 'wbevuec'.
     Decoded token claims: {token_info}.
     """
 
+
 def _current_timestamp() -> int:
     return int(time.time())
-
