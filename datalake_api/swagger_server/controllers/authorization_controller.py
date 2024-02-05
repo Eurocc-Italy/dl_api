@@ -20,7 +20,7 @@ env_config = Config(RepositoryEnv(DOTENV_FILE))
 # Constants for JWT token generation and verification
 JWT_ISSUER = env_config.get("JWT_ISSUER")
 JWT_SECRET = env_config.get("JWT_SECRET")
-JWT_LIFETIME_SECONDS = env_config.get("JWT_LIFETIME_SECONDS")
+JWT_LIFETIME_SECONDS = int(env_config.get("JWT_LIFETIME_SECONDS"))
 JWT_ALGORITHM = env_config.get("JWT_ALGORITHM")
 
 
