@@ -349,7 +349,7 @@ def replace_entry(file, json_data, **kwargs):  # noqa: E501###
         return f"An error occurred: {str(e)}", 500
 
 
-def update_entry(file, json_data, **kwargs):  # noqa: E501
+def update_entry(filename, json_data, **kwargs):  # noqa: E501
     # Information printed for system log
     print("Dictionary with token info:")
     print(kwargs)
