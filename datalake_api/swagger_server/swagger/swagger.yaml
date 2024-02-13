@@ -300,9 +300,14 @@ components:
           type: string
           format: binary
     update_path_body:
+      required:
+        - filename
+        - json_data
       type: object
       properties:
-        file:
+        filename:
+          type: string
+        json_data:
           type: string
           format: binary
 security:
