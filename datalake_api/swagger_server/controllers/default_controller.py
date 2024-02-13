@@ -379,7 +379,7 @@ def update_entry(file, json_data, **kwargs):  # noqa: E501
     collection = db[mongo_collection_name]
 
     try:
-        if not collection.find_one({"s3_key": filename}):
+        if not collection.find_one({"s3_key": file}):
             return f"Update failed, file not found. Please use POST method to create a new entry", 400
 
         # Step 2: Insert json_data into MongoDB
@@ -390,7 +390,7 @@ def update_entry(file, json_data, **kwargs):  # noqa: E501
         # modifying dictionary to use update operators, otherwise method will not work
         json_data_dict = {"$set": json_data_dict}
 
-        collection.find_one_and_update({"s3_key": filename}, json_data_dict)
+        collection.find_one_and_update({"s3_key": file}, json_data_dict)
 
         return "Metadata Updated Succesfully", 201
 
