@@ -68,7 +68,7 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/update_path_body'
+              $ref: '#/components/schemas/upload_body'
       responses:
         '200':
           description: Entry metadata updated successfully
