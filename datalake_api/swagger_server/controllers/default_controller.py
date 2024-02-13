@@ -349,7 +349,7 @@ def replace_entry(file, json_data, **kwargs):  # noqa: E501###
         return f"An error occurred: {str(e)}", 500
 
 
-def update_entry(file, json_data, **kwargs):  # noqa: E501
+def update_entry(filename, json_data, **kwargs):  # noqa: E501
     # Information printed for system log
     print("Dictionary with token info:")
     print(kwargs)
@@ -377,10 +377,10 @@ def update_entry(file, json_data, **kwargs):  # noqa: E501
     db = client[mongo_db_name]
     collection = db[mongo_collection_name]
 
-    if not collection.find_one({"s3_key": file.filename}):
-        return f"Update failed, file not found. Please use POST method to create a new entry", 400
-
     try:
+        if not collection.find_one({"s3_key": filename}):
+            return f"Update failed, file not found. Please use POST method to create a new entry", 400
+
         # Step 2: Insert json_data into MongoDB
         # Properly read json_data and insert it into MongoDB
         json_data_str = json_data.read().decode("utf-8")
@@ -389,7 +389,7 @@ def update_entry(file, json_data, **kwargs):  # noqa: E501
         # modifying dictionary to use update operators, otherwise method will not work
         json_data_dict = {"$set": json_data_dict}
 
-        collection.find_one_and_update({"s3_key": file.filename}, json_data_dict)
+        collection.find_one_and_update({"s3_key": filename}, json_data_dict)
 
         return "Metadata Updated Succesfully", 201
 
