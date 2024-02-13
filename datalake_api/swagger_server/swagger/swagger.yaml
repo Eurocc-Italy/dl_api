@@ -41,13 +41,6 @@ paths:
     put:
       summary: Replace an existing entry and its associated file in S3 for the given path in MongoDB
       operationId: replace_entry
-      parameters:
-        - name: path
-          in: query
-          required: true
-          description: Path of the file in MongoDB to be replaced
-          schema:
-            type: string
       requestBody:
         content:
           multipart/form-data:
@@ -71,21 +64,14 @@ paths:
     patch:
       summary: Update metadata in MongoDB for a file given its path
       operationId: update_entry
-      parameters:
-        - name: path
-          in: query
-          required: true
-          description: Path of the file whose metadata is to be updated
-          schema:
-            type: string
       requestBody:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/update_path_body'
+              $ref: '#/components/schemas/upload_body'
       responses:
         '200':
-          description: Entry and optionally the file updated successfully
+          description: Entry metadata updated successfully
         '400':
           description: Bad Request
         '401':

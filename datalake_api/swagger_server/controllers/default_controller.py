@@ -277,7 +277,7 @@ def query_post(query_file, python_file=None, config_json=None, **kwargs):
         return f"An error occurred: {str(e)}", 500
 
 
-def replace_entry(path, file=None, json_data=None, **kwargs):  # noqa: E501###
+def replace_entry(file, json_data, **kwargs):  # noqa: E501###
     # Information printed for system log
     print("Dictionary with token info:")
     print(kwargs)
@@ -291,10 +291,9 @@ def replace_entry(path, file=None, json_data=None, **kwargs):  # noqa: E501###
         # Handle cases where the Authorization header is missing or improperly formatted
         return {"message": "Unauthorized: Token missing or malformed"}, 401
 
-    unique_id = str(uuid.uuid4().hex)
-    logger.info("API call to %s", "replace_entry", extra={"uuid": unique_id, "token": token})
+    logger.info("API call to %s", "replace_entry", extra={"File": file.filename, "token": token})
 
-    """Replace an existing entry and its associated file in S3 for the given path in MongoDB
+    """Replace an existing entry in MongoDB and its associated file in S3
 
      # noqa: E501
 
@@ -319,64 +318,38 @@ def replace_entry(path, file=None, json_data=None, **kwargs):  # noqa: E501###
     db = client[mongo_db_name]
     collection = db[mongo_collection_name]
 
-    # Specify the local folder for file storage
-    local_folder = env_config.get("LOCAL_FOLDER", default="/home/centos/dtaas_test_api/COCO_dataset")
+    if not collection.find_one({"s3_key": file.filename}):
+        return f"Replacement failed, file not found. Please use POST method to create a new entry", 400
 
     try:
-        # Check if the received path is an absolute path or relative to the current working directory
-        if os.path.isabs(path):
-            absolute_path = path
-        else:
-            absolute_path = os.path.join(os.getcwd(), path)
-        # Debug print: Output the absolute_path
-        print(f"Debug: absolute_path = {absolute_path}")
+        # NOTE: S3 credentials must be saved in ~/.aws/config file
+        s3 = boto3.client(
+            service_name="s3",
+            endpoint_url=env_config.get("S3_ENDPOINT_URL"),
+        )
 
-        # Create a JSON-like object for MongoDB query
-        paths_to_check = [f"{absolute_path}"]
-
-        # Debug print: Output the paths_to_check before MongoDB query
-        print(f"Debug: paths_to_check before query = {paths_to_check}")
-
-        existing_entry = collection.find_one({"path": {"$in": paths_to_check}})
-
-        # Debug: Print the result of the MongoDB query
-        print(f"Debug: existing_entry = {existing_entry}")
-
-        if not existing_entry:
-            return "Entry not found for the given path", 404
-
-            # Step 2: Insert json_data into MongoDB
+        # Step 2: Insert json_data into MongoDB
         # Properly read json_data and insert it into MongoDB
         json_data_str = json_data.read().decode("utf-8")
         json_data_dict = json.loads(json_data_str)
+        json_data_dict["s3_key"] = file.filename
+        json_data_dict["path"] = f"{env_config.get('PFS_PATH_PREFIX')}{env_config.get('S3_BUCKET')}/{file.filename}"
 
-        paths_to_check = [doc.get("path", "") for doc in json_data_dict]
-        existing_entry = collection.find_one({"path": {"$in": paths_to_check}})
+        s3.upload_fileobj(
+            Fileobj=file,
+            Bucket=env_config.get("S3_BUCKET"),
+            Key=file.filename,
+        )
+        collection.find_one_and_replace({"s3_key": file.filename}, json_data_dict)
 
-        if existing_entry:
-            for doc in json_data_dict:
-                if collection.find_one_and_update({"path": doc.get("path")}, {"$set": doc}):
-                    print(f"Metadata updated,for path= {doc['path']}")
-                    json_data_dict.remove(doc)
-
-        # Step 3: Replace file in local folder if file is provided
-        if file:
-            local_file_path = os.path.join(local_folder, os.path.basename(path))
-            print(f"Debug: local_file_path = {local_file_path}")
-
-            if not os.path.exists(local_file_path):
-                return "Local file not found for the existing entry", 404
-
-            with open(local_file_path, "wb") as f:
-                f.write(file.read())
-
-        return "File updated succesfully, if metadata for file was included this has been updated", 200
+        # Step 3: Success message
+        return "File and Metadata replacement successful.", 201
 
     except Exception as e:
         return f"An error occurred: {str(e)}", 500
 
 
-def update_entry(path, file=None, **kwargs):  # noqa: E501
+def update_entry(file, json_data, **kwargs):  # noqa: E501
     # Information printed for system log
     print("Dictionary with token info:")
     print(kwargs)
@@ -390,12 +363,9 @@ def update_entry(path, file=None, **kwargs):  # noqa: E501
         # Handle cases where the Authorization header is missing or improperly formatted
         return {"message": "Unauthorized: Token missing or malformed"}, 401
 
-    unique_id = str(uuid.uuid4().hex)
-    logger.info("API call to %s", "update_entry", extra={"uuid": unique_id, "token": token})
+    logger.info("API call to %s", "update_entry", extra={"token": token})
 
-    """Update an existing entry in MongoDB based on the path and body."""
-
-    print(f"Debug: Received body = {file}")
+    """Update an existing entry in MongoDB."""
 
     # Initialize MongoDB client
     mongo_host = env_config.get("MONGO_HOST", default="localhost")
@@ -407,51 +377,21 @@ def update_entry(path, file=None, **kwargs):  # noqa: E501
     db = client[mongo_db_name]
     collection = db[mongo_collection_name]
 
-    # Initialize the file_replacement flag
-    file_replacement = False
-
-    # Specify local folder for file storage
-    local_folder = env_config.get("LOCAL_FOLDER", default="/home/centos/dtaas_test_api/COCO_dataset")
+    if not collection.find_one({"s3_key": file.filename}):
+        return f"Update failed, file not found. Please use POST method to create a new entry", 400
 
     try:
-        # Determine absolute path
-        absolute_path = os.path.join(local_folder, os.path.basename(path))
-
-        print(f"Debug: Absolute path = {absolute_path}")
-
-        # Create a JSON-like object for MongoDB query
-        paths_to_check = [f"{absolute_path}"]
-
-        # Debug print: Output the paths_to_check before MongoDB query
-        print(f"Debug: paths_to_check before query = {paths_to_check}")
-
-        existing_entry = collection.find_one({"path": {"$in": paths_to_check}})
-
-        print(f"Debug: Existing entry = {existing_entry}")
-
-        if not existing_entry:
-            return "Entry not found for the given path", 404
-
         # Step 2: Insert json_data into MongoDB
         # Properly read json_data and insert it into MongoDB
-        json_data_str = file.read().decode("utf-8")
+        json_data_str = json_data.read().decode("utf-8")
         json_data_dict = json.loads(json_data_str)
 
-        paths_to_check = [doc.get("path", "") for doc in json_data_dict]
-        existing_entry = collection.find_one({"path": {"$in": paths_to_check}})
+        # modifying dictionary to use update operators, otherwise method will not work
+        json_data_dict = {"$set": json_data_dict}
 
-        if existing_entry:
-            for doc in json_data_dict:
-                if collection.find_one_and_update({"path": doc.get("path")}, {"$set": doc}):
-                    print(f"Metadata updated,for path= {doc['path']}")
-                    json_data_dict.remove(doc)
-                    file_replacement = True
+        collection.find_one_and_update({"s3_key": file.filename}, json_data_dict)
 
-        # Step 3: Success message
-        if file_replacement:
-            return "Metadata is Updated Succesfully", 201
-        else:
-            return "Metadata not replaced", 400
+        return "Metadata Updated Succesfully", 201
 
     except Exception as e:
         return f"An error occurred: {str(e)}", 500
