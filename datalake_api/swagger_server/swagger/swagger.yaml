@@ -307,7 +307,6 @@ components:
       properties:
         file:
           type: string
-          format: binary
         json_data:
           type: string
           format: binary
