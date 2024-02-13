@@ -301,11 +301,11 @@ components:
           format: binary
     update_path_body:
       required:
-        - filename
+        - file
         - json_data
       type: object
       properties:
-        filename:
+        file:
           type: string
         json_data:
           type: string
