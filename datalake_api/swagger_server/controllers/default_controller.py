@@ -350,7 +350,7 @@ def replace_entry(file, json_data, **kwargs):  # noqa: E501###
 
 
 def update_entry(filename=None, json_data=None, **kwargs):  # noqa: E501
-    print(filename, json_data)
+    print(f"filename: {filename}, json_data: {json_data}")
     # Information printed for system log
     print("Dictionary with token info:")
     print(kwargs)
