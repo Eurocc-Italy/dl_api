@@ -349,7 +349,7 @@ def replace_entry(file, json_data, **kwargs):  # noqa: E501###
         return f"An error occurred: {str(e)}", 500
 
 
-def update_entry(file, json_data, **kwargs):  # noqa: E501
+def update_entry(json_data, **kwargs):  # noqa: E501
 
     # Information printed for system log
     print("Dictionary with token info:")
@@ -367,6 +367,13 @@ def update_entry(file, json_data, **kwargs):  # noqa: E501
     logger.info("API call to %s", "update_entry", extra={"token": token})
 
     """Update an existing entry in MongoDB."""
+
+    # Verify that both 'file' (S3_key) and 'json_data' are passed correctly
+    if 'file' not in request.form or 'json_data' not in request.files:
+        return {"message": "Missing 'file' or 'json_data'"}, 400
+
+    #Use flask.request in order to safely load string and stringbinary
+    file = request.form['file']
 
     # Initialize MongoDB client
     mongo_host = env_config.get("MONGO_HOST", default="localhost")
