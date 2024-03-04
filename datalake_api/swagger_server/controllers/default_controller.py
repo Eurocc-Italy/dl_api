@@ -206,9 +206,6 @@ def query_post(query_file, python_file=None, **kwargs):
     print(kwargs)
 
     config_json = request.form["config_json"]
-
-    print(query_file)
-    print(python_file)
     print(config_json)
 
     return

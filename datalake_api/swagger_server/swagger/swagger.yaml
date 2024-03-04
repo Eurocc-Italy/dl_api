@@ -275,8 +275,6 @@ components:
         python_file:
           type: string
           format: binary
-        config_json:
-          type: string
     upload_body:
       required:
         - file
