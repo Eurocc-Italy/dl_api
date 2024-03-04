@@ -224,9 +224,14 @@ def query_post(query_file, python_file=None, config_json=None, **kwargs):
 
         if config_json:
             # Parse the configuration JSON
-            config = json.loads(config_json.read().decode("utf-8"))
-            config_server = config.get("config_server")  # Retrieve entire object or None
-            config_client = config.get("config_client")  # Retrieve entire object or None
+            try:
+                config_server = config_json["config_server"]
+            except KeyError:
+                config_server = None
+            try:
+                config_client = config_json["config_client"]
+            except KeyError:
+                config_client = None
         else:
             config_client = None
             config_server = None
@@ -369,11 +374,11 @@ def update_entry(json_data, **kwargs):  # noqa: E501
     """Update an existing entry in MongoDB."""
 
     # Verify that both 'file' (S3_key) and 'json_data' are passed correctly
-    if 'file' not in request.form or 'json_data' not in request.files:
+    if "file" not in request.form or "json_data" not in request.files:
         return {"message": "Missing 'file' or 'json_data'"}, 400
 
-    #Use flask.request in order to safely load string and stringbinary
-    file = request.form['file']
+    # Use flask.request in order to safely load string and stringbinary
+    file = request.form["file"]
 
     # Initialize MongoDB client
     mongo_host = env_config.get("MONGO_HOST", default="localhost")
