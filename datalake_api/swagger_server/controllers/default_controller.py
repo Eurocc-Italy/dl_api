@@ -200,10 +200,12 @@ def delete_file(file_name, **kwargs):
         return f"An error occurred: {str(e)}\n", 500
 
 
-def query_post(query_file, python_file=None, config_json=None, **kwargs):
+def query_post(query_file, python_file=None, **kwargs):
     # Information printed for system log
     print("Dictionary with token info:")
     print(kwargs)
+
+    config_json = request.form["config_json"]
 
     print(query_file)
     print(python_file)
