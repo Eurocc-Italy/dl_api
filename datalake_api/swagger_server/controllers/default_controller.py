@@ -210,8 +210,6 @@ def query_post(query_file, python_file=None, **kwargs):
     except KeyError:
         config_json = None
 
-    print(config_json)
-
     # Extract the token from the Authorization header
     auth_header = request.headers.get("Authorization")
 
@@ -242,6 +240,9 @@ def query_post(query_file, python_file=None, **kwargs):
         else:
             config_client = None
             config_server = None
+
+        print(config_client)
+        print(config_server)
 
         # Generate a unique ID and create a temporary directory
         unique_id = str(uuid.uuid4().hex)
