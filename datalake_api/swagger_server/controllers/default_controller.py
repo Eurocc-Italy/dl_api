@@ -229,6 +229,7 @@ def query_post(query_file, python_file=None, **kwargs):
 
         if config_json:
             # Parse the configuration JSON
+            print("HERE")
             try:
                 config_server = config_json["config_server"]
             except KeyError:
