@@ -205,6 +205,10 @@ def query_post(query_file, python_file=None, config_json=None, **kwargs):
     print("Dictionary with token info:")
     print(kwargs)
 
+    print(config_json)
+
+    return
+
     # Extract the token from the Authorization header
     auth_header = request.headers.get("Authorization")
 
