@@ -241,8 +241,8 @@ def query_post(query_file, python_file=None, **kwargs):
             config_client = None
             config_server = None
 
-        print(config_client)
-        print(config_server)
+        print(f"config_client: {config_client}")
+        print(f"config_server: {config_server}")
 
         # Generate a unique ID and create a temporary directory
         unique_id = str(uuid.uuid4().hex)
