@@ -205,6 +205,8 @@ def query_post(query_file, python_file=None, config_json=None, **kwargs):
     print("Dictionary with token info:")
     print(kwargs)
 
+    print(query_file)
+    print(python_file)
     print(config_json)
 
     return
