@@ -206,7 +206,7 @@ def query_post(query_file, python_file=None, **kwargs):
     print(kwargs)
 
     try:
-        config_json = request.form["config_json"]
+        config_json = json.loads(request.form["config_json"])
     except KeyError:
         config_json = None
 
@@ -233,7 +233,6 @@ def query_post(query_file, python_file=None, **kwargs):
                 config_server = config_json["config_server"]
             except KeyError:
                 config_server = None
-            print("HERE")
             try:
                 config_client = config_json["config_client"]
             except KeyError:
