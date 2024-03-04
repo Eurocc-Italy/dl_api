@@ -276,7 +276,8 @@ components:
           type: string
           format: binary
         config_json:
-          type: application/json
+          type: string
+          format: binary
     upload_body:
       required:
         - file
