@@ -289,7 +289,6 @@ components:
           format: binary
         json_data:
           type: string
-          format: binary
     replace_path_body:
       type: object
       properties:
