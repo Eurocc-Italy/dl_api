@@ -222,8 +222,6 @@ def query_post(query_file, python_file=None, **kwargs):
     unique_id = str(uuid.uuid4().hex)
     logger.info("API call to %s", "query_post", extra={"uuid": unique_id, "token": token})
 
-    print("HERE")
-
     try:
         # Ensure the query file and config JSON are provided
         if not query_file:
@@ -289,6 +287,7 @@ def query_post(query_file, python_file=None, **kwargs):
         return f"Files processed successfully, ID: {unique_id}", 200
 
     except Exception as e:
+        print(e)
         return f"An error occurred: {str(e)}", 500
 
 
