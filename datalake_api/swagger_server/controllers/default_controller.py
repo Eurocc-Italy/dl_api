@@ -276,7 +276,7 @@ def query_post(query_file, python_file=None, **kwargs):
         # NOTE (Luca): same as before, since we're in the temporary directory we can just send the relative path of
         # the json file, otherwise the client version on HPC gets a wrong path
         with pushd(tdir):
-            command = f"dtaas_tui_server launch.json"
+            command = f"dlaas_tui_server launch.json"
             stdout, stderr = subprocess.Popen(
                 command,
                 shell=True,
