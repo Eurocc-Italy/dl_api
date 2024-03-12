@@ -560,3 +560,105 @@ def update_config(**kwargs):
     # except Exception as e:
     #    return {"error": str(e)}, 500
     return print("out of service for now")
+
+
+def translate_sql_to_mongo(filter_param):
+    """
+    Translates a simplified SQL-like filter string to a MongoDB query.
+    Supports basic operators '=', '>', '<', '!=', and logical operators 'AND', 'OR', 'NOT' in a case-insensitive manner.
+    
+    Args:
+        filter_param (str): The filter string, e.g., "field1=value AND NOT field2>value OR field3!=value".
+    
+    Returns:
+        dict: The MongoDB query.
+    """
+    # Operator mappings
+    operators_mapping = {
+        "=": "$eq",
+        ">": "$gt",
+        "<": "$lt",
+        "!=": "$ne",
+    }
+
+    def parse_condition(condition):
+        """
+        Parses a single condition into a MongoDB query part, handling 'NOT' for simple negations.
+        """
+        is_negation = condition.strip().lower().startswith("not")
+        if is_negation:
+            condition = condition[4:]  # Remove 'NOT' prefix
+
+        for op, mongo_op in operators_mapping.items():
+            if op in condition:
+                parts = condition.split(op)
+                field, value = parts[0].strip(), parts[1].strip()
+                # Apply negation if 'NOT' was detected
+                if is_negation:
+                    if mongo_op == "$eq":
+                        return {field: {"$ne": value}}
+                    else:
+                        return {field: {"$not": {mongo_op: value}}}
+                else:
+                    return {field: {mongo_op: value}}
+        return {}
+
+    # Normalize logical operators to lowercase for consistent processing
+    normalized_filter = filter_param.replace(' AND ', ' and ').replace(' OR ', ' or ').replace(' NOT ', ' not ')
+
+    query = {}
+
+    # Process 'or' conditions
+    if ' or ' in normalized_filter:
+        or_parts = normalized_filter.split(' or ')
+        query['$or'] = [parse_condition(part) for part in or_parts]
+    # Process 'and' conditions
+    elif ' and ' in normalized_filter:
+        and_parts = normalized_filter.split(' and ')
+        query['$and'] = [parse_condition(part) for part in and_parts]
+    else:
+        # Handle single condition without logical operators
+        query = parse_condition(normalized_filter)
+
+    return query
+
+
+
+# Assuming you have added the endpoint to your OpenAPI specification
+# with an operationId mapped to this function:
+def browse_files():
+    ## Extract and verify the token, following the existing authorization pattern
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return Response("Unauthorized: Token missing or malformed\n", status=401)
+    
+    token = auth_header[7:]  # Assuming you have a function to verify tokens
+    if not your_verify_token_function(token):  # Placeholder for your actual token verification logic
+        return Response("Unauthorized: Invalid token\n", status=401)
+
+    filter_param = request.args.get('filter', None)  # Extracting the SQL-like filter parameter
+
+    # Logging the API call
+    logger.info(f"API call to browse_files with filter: {filter_param}", extra={"token": token})
+
+    try:
+        mongo_query = translate_sql_to_mongo(filter_param) if filter_param is not None else {}
+
+        # Utilize the existing MongoDB client initialization pattern
+            # Initialize MongoDB client
+        client = MongoClient(env_config.get("MONGO_HOST"), int(env_config.get("MONGO_PORT")))
+        db = client[env_config.get("MONGO_DB_NAME")]
+        collection = db[env_config.get("MONGO_COLLECTION_NAME")]
+
+        if not mongo_query:  # This checks if the query is an empty dictionary
+            files = collection.find({}, {'_id': 0, 's3_key': 1})  # Explicitly pass an empty dictionary
+        else:
+            files = collection.find(mongo_query, {'_id': 0, 's3_key': 1})
+
+        file_list = [file['s3_key'] for file in files]
+
+        return Response(json.dumps(file_list), mimetype='application/json')
+
+    except Exception as e:
+        logger.error(f"An error occurred in browse_files: {str(e)}")
+        return Response("Internal Server Error\n", status=500)
