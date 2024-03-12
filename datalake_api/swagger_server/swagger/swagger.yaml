@@ -212,6 +212,39 @@ paths:
         '403':
           description: Forbidden - Insufficient Permissions
       x-openapi-router-controller: swagger_server.controllers.default_controller
+      
+  /browse_files:
+    get:
+      summary: List files from the datalake with optional SQL-like filtering
+      operationId: browse_files
+      parameters:
+        - name: filter
+          in: query
+          description: SQL-like filter to apply on the files list.
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of files successfully retrieved.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  description: S3 key of a file in the datalake.
+        '400':
+          description: Bad Request - Incorrect Format or Parameters
+        '401':
+          description: Unauthorized - Invalid Token
+        '403':
+          description: Forbidden - Insufficient Permissions
+        '500':
+          description: Internal Server Error
+
+      x-openapi-router-controller: swagger_server.controllers.default_controller
+
 components:
   securitySchemes:
     bearerAuth:
