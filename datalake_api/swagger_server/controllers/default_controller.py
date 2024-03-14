@@ -234,14 +234,14 @@ def query_post(query_file, python_file=None, **kwargs):
             except KeyError:
                 config_server = None
             try:
-                config_client = config_json["config_client"]
+                config_hpc = config_json["config_hpc"]
             except KeyError:
-                config_client = None
+                config_hpc = None
         else:
-            config_client = None
+            config_hpc = None
             config_server = None
 
-        print(f"config_client: {config_client}")
+        print(f"config_hpc: {config_hpc}")
         print(f"config_server: {config_server}")
 
         # Generate a unique ID and create a temporary directory
@@ -265,7 +265,7 @@ def query_post(query_file, python_file=None, **kwargs):
             "sql_query": query_content,
             "script_path": os.path.basename(script_path),
             "id": unique_id,
-            "config_client": config_client or {},  # Insert empty dict if None
+            "config_hpc": config_hpc or {},  # Insert empty dict if None
             "config_server": config_server or {},  # Insert empty dict if None
         }
         launch_path = os.path.join(tdir, "launch.json")
@@ -566,10 +566,10 @@ def translate_sql_to_mongo(filter_param):
     """
     Translates a simplified SQL-like filter string to a MongoDB query.
     Supports basic operators '=', '>', '<', '!=', and logical operators 'AND', 'OR', 'NOT' in a case-insensitive manner.
-    
+
     Args:
         filter_param (str): The filter string, e.g., "field1=value AND NOT field2>value OR field3!=value".
-    
+
     Returns:
         dict: The MongoDB query.
     """
@@ -604,18 +604,18 @@ def translate_sql_to_mongo(filter_param):
         return {}
 
     # Normalize logical operators to lowercase for consistent processing
-    normalized_filter = filter_param.replace(' AND ', ' and ').replace(' OR ', ' or ').replace(' NOT ', ' not ')
+    normalized_filter = filter_param.replace(" AND ", " and ").replace(" OR ", " or ").replace(" NOT ", " not ")
 
     query = {}
 
     # Process 'or' conditions
-    if ' or ' in normalized_filter:
-        or_parts = normalized_filter.split(' or ')
-        query['$or'] = [parse_condition(part) for part in or_parts]
+    if " or " in normalized_filter:
+        or_parts = normalized_filter.split(" or ")
+        query["$or"] = [parse_condition(part) for part in or_parts]
     # Process 'and' conditions
-    elif ' and ' in normalized_filter:
-        and_parts = normalized_filter.split(' and ')
-        query['$and'] = [parse_condition(part) for part in and_parts]
+    elif " and " in normalized_filter:
+        and_parts = normalized_filter.split(" and ")
+        query["$and"] = [parse_condition(part) for part in and_parts]
     else:
         # Handle single condition without logical operators
         query = parse_condition(normalized_filter)
@@ -623,20 +623,19 @@ def translate_sql_to_mongo(filter_param):
     return query
 
 
-
 # Assuming you have added the endpoint to your OpenAPI specification
 # with an operationId mapped to this function:
 def browse_files():
     ## Extract and verify the token, following the existing authorization pattern
-    auth_header = request.headers.get('Authorization')
-    if not auth_header or not auth_header.startswith('Bearer '):
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
         return Response("Unauthorized: Token missing or malformed\n", status=401)
-    
+
     token = auth_header[7:]  # Assuming you have a function to verify tokens
     if not your_verify_token_function(token):  # Placeholder for your actual token verification logic
         return Response("Unauthorized: Invalid token\n", status=401)
 
-    filter_param = request.args.get('filter', None)  # Extracting the SQL-like filter parameter
+    filter_param = request.args.get("filter", None)  # Extracting the SQL-like filter parameter
 
     # Logging the API call
     logger.info(f"API call to browse_files with filter: {filter_param}", extra={"token": token})
@@ -645,19 +644,19 @@ def browse_files():
         mongo_query = translate_sql_to_mongo(filter_param) if filter_param is not None else {}
 
         # Utilize the existing MongoDB client initialization pattern
-            # Initialize MongoDB client
+        # Initialize MongoDB client
         client = MongoClient(env_config.get("MONGO_HOST"), int(env_config.get("MONGO_PORT")))
         db = client[env_config.get("MONGO_DB_NAME")]
         collection = db[env_config.get("MONGO_COLLECTION_NAME")]
 
         if not mongo_query:  # This checks if the query is an empty dictionary
-            files = collection.find({}, {'_id': 0, 's3_key': 1})  # Explicitly pass an empty dictionary
+            files = collection.find({}, {"_id": 0, "s3_key": 1})  # Explicitly pass an empty dictionary
         else:
-            files = collection.find(mongo_query, {'_id': 0, 's3_key': 1})
+            files = collection.find(mongo_query, {"_id": 0, "s3_key": 1})
 
-        file_list = [file['s3_key'] for file in files]
+        file_list = [file["s3_key"] for file in files]
 
-        return Response(json.dumps(file_list), mimetype='application/json')
+        return Response(json.dumps(file_list), mimetype="application/json")
 
     except Exception as e:
         logger.error(f"An error occurred in browse_files: {str(e)}")
