@@ -6,6 +6,168 @@ info:
 servers:
   - url: http://localhost:8080/v1
 paths:
+
+  /browse_files:
+    get:
+      summary: List files from the datalake with optional SQL-like filtering
+      operationId: browse_files
+      parameters:
+        - name: filter
+          in: query
+          description: SQL-like filter to apply on the files list.
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of files successfully retrieved.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  description: S3 key of a file in the datalake.
+        '400':
+          description: Bad Request - Incorrect Format or Parameters
+        '401':
+          description: Unauthorized - Invalid Token
+        '403':
+          description: Forbidden - Insufficient Permissions
+        '500':
+          description: Internal Server Error
+      x-openapi-router-controller: swagger_server.controllers.default_controller
+
+  /delete:
+    delete:
+      summary: Delete a file in datalake (S3) and its MongoDB entry based on the given file_path
+      operationId: delete_file
+      parameters:
+        - name: file_name
+          in: query
+          required: true
+          description: Name (S3 key) of the file in the datalake and MongoDB to be deleted
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File and its database entry deleted successfully
+        '400':
+          description: Bad Request - Invalid file name or format
+        '401':
+          description: Unauthorized - Invalid Token
+        '403':
+          description: Forbidden - Insufficient Permissions
+        '404':
+          description: Not Found - File does not exist
+      x-openapi-router-controller: swagger_server.controllers.default_controller
+
+  /download:
+    get:
+      summary: Download an item (using item path) from the datalake
+      operationId: download_id_get
+      parameters:
+        - name: file_name
+          in: query
+          required: true
+          description: Path of the item to be downloaded
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Download Successful
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+                x-content-type: application/octet-stream
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+      x-openapi-router-controller: swagger_server.controllers.default_controller
+
+  /query_and_process:
+    post:
+      summary: Query (sql in .txt) and Manipulate (file.py) datalake items, with optional server and client configurations
+      operationId: query_post
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/query_and_process_body'
+      responses:
+        '200':
+          description: Query and Manipulate Successful
+          content:
+            text/plain:
+              schema:
+                type: string
+                x-content-type: text/plain
+        '400':
+          description: Bad Request - Incorrect Format or Parameters
+        '401':
+          description: Unauthorized - Invalid Token
+        '403':
+          description: Forbidden - Insufficient Permissions
+        '422':
+          description: Unprocessable Entity - Query or Processing Error
+      x-openapi-router-controller: swagger_server.controllers.default_controller
+
+  /replace:
+    put:
+      summary: Replace an existing entry and its associated file in S3 for the given path in MongoDB
+      operationId: replace_entry
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/upload_body'
+      responses:
+        '200':
+          description: Entry and file replaced successfully
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Path not found in the database
+        '422':
+          description: Unprocessable Entity
+      x-openapi-router-controller: swagger_server.controllers.default_controller
+
+  /update:
+    patch:
+      summary: Update metadata in MongoDB for a file given its path
+      operationId: update_entry
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/update_path_body'
+      responses:
+        '200':
+          description: Entry metadata updated successfully
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Path not found in the database
+        '422':
+          description: Unprocessable Entity
+      x-openapi-router-controller: swagger_server.controllers.default_controller
+
   /upload:
     post:
       summary: Upload files to datalake (S3) and add entries to MongoDB or replace files in datalake (S3) and keep corresponding MongoDB entry
@@ -37,213 +199,6 @@ paths:
         '409':
           description: Conflict - Duplicate Entry Detected
       x-openapi-router-controller: swagger_server.controllers.default_controller
-  /replace:
-    put:
-      summary: Replace an existing entry and its associated file in S3 for the given path in MongoDB
-      operationId: replace_entry
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/upload_body'
-      responses:
-        '200':
-          description: Entry and file replaced successfully
-        '400':
-          description: Bad Request
-        '401':
-          description: Unauthorized
-        '403':
-          description: Forbidden
-        '404':
-          description: Path not found in the database
-        '422':
-          description: Unprocessable Entity
-      x-openapi-router-controller: swagger_server.controllers.default_controller
-  /update:
-    patch:
-      summary: Update metadata in MongoDB for a file given its path
-      operationId: update_entry
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/update_path_body'
-      responses:
-        '200':
-          description: Entry metadata updated successfully
-        '400':
-          description: Bad Request
-        '401':
-          description: Unauthorized
-        '403':
-          description: Forbidden
-        '404':
-          description: Path not found in the database
-        '422':
-          description: Unprocessable Entity
-      x-openapi-router-controller: swagger_server.controllers.default_controller
-  /download:
-    get:
-      summary: Download an item (using item path) from the datalake
-      operationId: download_id_get
-      parameters:
-        - name: file_name
-          in: query
-          required: true
-          description: Path of the item to be downloaded
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Download Successful
-          content:
-            application/octet-stream:
-              schema:
-                type: string
-                format: binary
-                x-content-type: application/octet-stream
-        '400':
-          description: Bad Request
-        '401':
-          description: Unauthorized
-        '403':
-          description: Forbidden
-        '404':
-          description: Not Found
-      x-openapi-router-controller: swagger_server.controllers.default_controller
-  /query_and_process:
-    post:
-      summary: Query (sql in .txt) and Manipulate (file.py) datalake items, with optional server and client configurations
-      operationId: query_post
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/query_and_process_body'
-      responses:
-        '200':
-          description: Query and Manipulate Successful
-          content:
-            text/plain:
-              schema:
-                type: string
-                x-content-type: text/plain
-        '400':
-          description: Bad Request - Incorrect Format or Parameters
-        '401':
-          description: Unauthorized - Invalid Token
-        '403':
-          description: Forbidden - Insufficient Permissions
-        '422':
-          description: Unprocessable Entity - Query or Processing Error
-      x-openapi-router-controller: swagger_server.controllers.default_controller
-  /delete:
-    delete:
-      summary: Delete a file in datalake (S3) and its MongoDB entry based on the given file_path
-      operationId: delete_file
-      parameters:
-        - name: file_name
-          in: query
-          required: true
-          description: Name (S3 key) of the file in the datalake and MongoDB to be deleted
-          schema:
-            type: string
-      responses:
-        '200':
-          description: File and its database entry deleted successfully
-        '400':
-          description: Bad Request - Invalid file name or format
-        '401':
-          description: Unauthorized - Invalid Token
-        '403':
-          description: Forbidden - Insufficient Permissions
-        '404':
-          description: Not Found - File does not exist
-      x-openapi-router-controller: swagger_server.controllers.default_controller
-  /config:
-    get:
-      operationId: get_config
-      summary: Retrieve Configuration
-      responses:
-        '200':
-          description: Configuration retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/update_path_body'
-        '400':
-          description: Bad Request - Incorrect Format or Parameters
-        '401':
-          description: Unauthorized - Invalid Token
-        '403':
-          description: Forbidden - Insufficient Permissions
-        '404':
-          description: Configuration not found
-      x-openapi-router-controller: swagger_server.controllers.default_controller
-    put:
-      operationId: update_config
-      summary: Update Configuration
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                new_config:
-                  type: string
-                  format: binary
-      responses:
-        '200':
-          description: Configuration updated successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-        '400':
-          description: Bad Request - Incorrect Format or Parameters
-        '401':
-          description: Unauthorized - Invalid Token
-        '403':
-          description: Forbidden - Insufficient Permissions
-      x-openapi-router-controller: swagger_server.controllers.default_controller
-      
-  /browse_files:
-    get:
-      summary: List files from the datalake with optional SQL-like filtering
-      operationId: browse_files
-      parameters:
-        - name: filter
-          in: query
-          description: SQL-like filter to apply on the files list.
-          required: false
-          schema:
-            type: string
-      responses:
-        '200':
-          description: List of files successfully retrieved.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
-                  description: S3 key of a file in the datalake.
-        '400':
-          description: Bad Request - Incorrect Format or Parameters
-        '401':
-          description: Unauthorized - Invalid Token
-        '403':
-          description: Forbidden - Insufficient Permissions
-        '500':
-          description: Internal Server Error
-
-      x-openapi-router-controller: swagger_server.controllers.default_controller
 
 components:
   securitySchemes:
@@ -252,51 +207,8 @@ components:
       scheme: bearer
       bearerFormat: JWT
       x-bearerInfoFunc: swagger_server.controllers.authorization_controller.decode_token
+      
   schemas:
-    Asset:
-      type: object
-      properties:
-        area:
-          type: number
-          description: Area covered by the object in the image.
-        bbox:
-          type: array
-          description: Bounding box coordinates.
-          items:
-            type: number
-        caption:
-          type: string
-          description: Caption describing the image.
-        captured:
-          type: string
-          description: Timestamp when the image was captured.
-          format: date-time
-        category:
-          type: string
-          description: Category description.
-        category_id:
-          type: integer
-          description: Category identifier.
-        height:
-          type: integer
-          description: Height of the image in pixels.
-        id:
-          type: integer
-          description: Unique identifier for the asset.
-        iscrowd:
-          type: integer
-          description: Flag indicating crowd presence (0 or 1).
-        path:
-          type: string
-          description: File path for the asset.
-        segmentation:
-          type: array
-          description: Pixel-level segmentation details.
-          items:
-            type: number
-        width:
-          type: integer
-          description: Width of the image in pixels.
     query_and_process_body:
       required:
         - query_file
@@ -308,6 +220,17 @@ components:
         python_file:
           type: string
           format: binary
+
+    replace_path_body:
+      type: object
+      properties:
+        metadata:
+          type: string
+          format: json
+        file:
+          type: string
+          format: binary
+
     upload_body:
       required:
         - file
@@ -320,15 +243,7 @@ components:
         json_data:
           type: string
           format: binary
-    replace_path_body:
-      type: object
-      properties:
-        metadata:
-          type: string
-          format: json
-        file:
-          type: string
-          format: binary
+
     update_path_body:
       required:
         - file
@@ -340,5 +255,7 @@ components:
         json_data:
           type: string
           format: binary
+
+
 security:
   - bearerAuth: []

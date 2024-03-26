@@ -23,17 +23,13 @@ JWT_SECRET = env_config.get("JWT_SECRET")
 JWT_LIFETIME_SECONDS = int(env_config.get("JWT_LIFETIME_SECONDS"))
 JWT_ALGORITHM = env_config.get("JWT_ALGORITHM")
 
-
 def decode_token(token):
     try:
         decoded_token = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        # Here you can add additional token validation if needed
         return decoded_token
     except JWTError as e:
-        # Optionally, log the error details for debugging
         print(f"JWT Decode Error: {e}")
         raise Unauthorized from e
-
 
 def generate_token(user_id):
     timestamp = _current_timestamp()
@@ -48,8 +44,9 @@ def generate_token(user_id):
 
 def get_secret(user, token_info) -> str:
     return f"""
-    You are user_id {user} and the secret is 'wbevuec'.
+    You are user_id {user}.
     Decoded token claims: {token_info}.
+    The JWT secret is: {JWT_SECRET}.
     """
 
 
