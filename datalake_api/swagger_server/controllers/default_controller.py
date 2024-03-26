@@ -139,10 +139,50 @@ def is_valid_file_path(path):
 
 
 def browse_files():
+    """
+    List files from the datalake with optional SQL-like filtering.
+
+    Args:
+        filter (str, optional): SQL-like filter to apply on the files list.
+
+    Returns:
+        Response: A JSON response containing the list of files or an error message.
+    """
+    # Extract and verify the token
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return Response("Unauthorized: Token missing or malformed\n", status=401)
+
+    token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
+
+    filter_param = request.args.get("filter", None)  # Extracting the SQL-like filter parameter
+
+    logger.info(f"API call to browse_files with filter: {filter_param}", extra={"token": token})
+
+    try:
+        mongo_query = translate_sql_to_mongo(filter_param) if filter_param is not None else {}
+
+        # Initialize MongoDB client
+        client = MongoClient(env_config.get("MONGO_HOST"), int(env_config.get("MONGO_PORT")))
+        db = client[env_config.get("MONGO_DB_NAME")]
+        collection = db[env_config.get("MONGO_COLLECTION_NAME")]
+
+        if not mongo_query:  # This checks if the query is an empty dictionary
+            files = collection.find({}, {"_id": 0, "s3_key": 1})  # Explicitly pass an empty dictionary
+        else:
+            files = collection.find(mongo_query, {"_id": 0, "s3_key": 1})
+
+        file_list = [file["s3_key"] for file in files]
+
+        return Response(json.dumps(file_list), mimetype="application/json")
+
+    except Exception as e:
+        logger.error(f"An error occurred in browse_files: {str(e)}")
+        return Response("Internal Server Error\n", status=500)
 
 
 def delete_file(file_name, **kwargs):
-        """
+    """
     Delete a file from the datalake (S3) and its corresponding entry in MongoDB.
 
     Args:
@@ -564,45 +604,3 @@ def upload_post(file, json_data, **kwargs):
         return f"Upload Failed: {str(e)}", 400
 
 
-
-    """
-    Delete a file from the datalake (S3) and its corresponding entry in MongoDB.
-
-    Args:
-        file_name (str): The name of the file to be deleted.
-        **kwargs: Additional keyword arguments (contains token information).
-
-    Returns:
-        tuple: A tuple containing the response message and status code.
-    """
-    # Extract and verify the token
-    auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
-        return Response("Unauthorized: Token missing or malformed\n", status=401)
-
-    token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
-
-    filter_param = request.args.get("filter", None)  # Extracting the SQL-like filter parameter
-
-    logger.info(f"API call to browse_files with filter: {filter_param}", extra={"token": token})
-
-    try:
-        mongo_query = translate_sql_to_mongo(filter_param) if filter_param is not None else {}
-
-        # Initialize MongoDB client
-        client = MongoClient(env_config.get("MONGO_HOST"), int(env_config.get("MONGO_PORT")))
-        db = client[env_config.get("MONGO_DB_NAME")]
-        collection = db[env_config.get("MONGO_COLLECTION_NAME")]
-
-        if not mongo_query:  # This checks if the query is an empty dictionary
-            files = collection.find({}, {"_id": 0, "s3_key": 1})  # Explicitly pass an empty dictionary
-        else:
-            files = collection.find(mongo_query, {"_id": 0, "s3_key": 1})
-
-        file_list = [file["s3_key"] for file in files]
-
-        return Response(json.dumps(file_list), mimetype="application/json")
-
-    except Exception as e:
-        logger.error(f"An error occurred in browse_files: {str(e)}")
-        return Response("Internal Server Error\n", status=500)
