@@ -47,6 +47,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 logger.addHandler(handler)
 
+
 # aider function for browse_files
 def translate_sql_to_mongo(filter_param):
     """
@@ -108,6 +109,7 @@ def translate_sql_to_mongo(filter_param):
 
     return query
 
+
 # aider function to query_post
 def escape_special_characters(content):
     # Escape double quotes
@@ -127,7 +129,8 @@ def escape_special_characters(content):
     content = content.replace("'", "\\'")
 
     return content
-    
+
+
 # aider function for path validation
 def is_valid_file_path(path):
     """
@@ -370,7 +373,7 @@ def query_post(query_file, python_file=None, **kwargs):
         # it has a path like /home/centos/.../{uuid4.hex}/script.py which will not be found on HPC
         launch_data = {
             "sql_query": query_content,
-            "script_path": os.path.basename(script_path),
+            "script_path": os.path.basename(script_path) if python_file else None,
             "id": unique_id,
             "config_hpc": config_hpc or {},  # Insert empty dict if None
             "config_server": config_server or {},  # Insert empty dict if None
@@ -397,7 +400,7 @@ def query_post(query_file, python_file=None, **kwargs):
         return f"An error occurred: {str(e)}", 500
 
 
-def replace_entry(file, json_data, **kwargs):  
+def replace_entry(file, json_data, **kwargs):
     """
     Replace an existing entry in MongoDB and its associated file in S3.
 
@@ -602,5 +605,3 @@ def upload_post(file, json_data, **kwargs):
             collection.delete_one({"s3_key": file.filename})
 
         return f"Upload Failed: {str(e)}", 400
-
-
