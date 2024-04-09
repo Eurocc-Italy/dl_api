@@ -394,6 +394,8 @@ def query_post(query_file, python_file=None, **kwargs):
                 stderr=subprocess.PIPE,
             ).communicate()
 
+        shutil.rmtree(tdir)  # Removing temporary directory. Comment for debugging.
+
         return f"Files processed successfully, ID: {unique_id}", 200
 
     except Exception as e:
