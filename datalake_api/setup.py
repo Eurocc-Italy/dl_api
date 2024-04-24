@@ -20,7 +20,7 @@ REQUIRES = [
     "swagger-ui-bundle",
     "pymongo == 4.5.0",
     "urllib3 == 1.26",
-    "dlaas-tui @ git+https://lbabetto:glpat-SHKz4A2W6RoJU2zFo4Pz@gitlab.hpc.cineca.it/lbabetto/dlaas-tui",
+    "dlaas-tui @ git+https://lbabetto:glpat-7Njd9GVtxP-ajQqXCXB8@gitlab.hpc.cineca.it/lbabetto/dlaas-tui",
     "boto3",
     "python-decouple",
     "python-dotenv",
