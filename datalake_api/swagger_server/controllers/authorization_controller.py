@@ -7,6 +7,7 @@ https://connexion.readthedocs.io/en/latest/security.html
 """
 import time
 from pathlib import Path
+import uuid
 
 import connexion
 from jose import JWTError, jwt
@@ -23,11 +24,18 @@ JWT_ISSUER = env_config.get("JWT_ISSUER")
 JWT_SECRET = env_config.get("JWT_SECRET")
 JWT_LIFETIME_SECONDS = int(env_config.get("JWT_LIFETIME_SECONDS"))
 JWT_ALGORITHM = env_config.get("JWT_ALGORITHM")
+MAC_HEX = uuid.getnode()
 
 
 def decode_token(token):
     try:
-        decoded_token = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        secret = int(JWT_SECRET, 16)
+    except ValueError:
+        print("ERROR: JWT_SECRET key must be a hexadecimal number.")
+        return
+
+    try:
+        decoded_token = jwt.decode(token, hex(secret * MAC_HEX), algorithms=[JWT_ALGORITHM])
         return decoded_token
     except JWTError as e:
         print(f"JWT Decode Error: {e}")
@@ -35,6 +43,12 @@ def decode_token(token):
 
 
 def generate_token(user_id, duration=JWT_LIFETIME_SECONDS):
+    try:
+        secret = int(JWT_SECRET, 16)
+    except ValueError:
+        print("ERROR: JWT_SECRET key must be a hexadecimal number.")
+        return
+
     timestamp = _current_timestamp()
     payload = {
         "iss": JWT_ISSUER,
@@ -42,7 +56,8 @@ def generate_token(user_id, duration=JWT_LIFETIME_SECONDS):
         "exp": int(timestamp + duration),
         "sub": str(user_id),
     }
-    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+    return jwt.encode(payload, hex(secret * MAC_HEX), algorithm=JWT_ALGORITHM)
 
 
 def generate_token_cli():
