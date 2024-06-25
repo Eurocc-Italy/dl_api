@@ -1,54 +1,81 @@
-import connexion
-import six
-from io import BytesIO
-
-from swagger_server.models.asset import Asset  # noqa: E501
-from swagger_server import util
-from werkzeug.datastructures import FileStorage
-
-import os
-import shutil
-from flask import send_file, request, Response
-import json
-from pymongo import MongoClient
-
 import base64
-import connexion
-import six
-
-from swagger_server.models.update_path_body import UpdatePathBody  # noqa: E501
-from swagger_server import util
-import uuid
+import json
 import logging
+import os
+import re
+import shutil
+import subprocess
+import uuid
+from io import BytesIO
+from pathlib import Path
+from tempfile import mkdtemp
 
 from decouple import Config, RepositoryEnv
-import subprocess
-from tempfile import mkdtemp
+from flask import send_file, request, Response, jsonify
+from pymongo import MongoClient
 from sh import pushd  # Import pushd from the sh library
+from werkzeug.datastructures import FileStorage
 
-import boto3, botocore
+import boto3
+import botocore
+import connexion
+import six  # try to remove
 
+from swagger_server.controllers.authorization_controller import decode_token
+from swagger_server import util  # try to remove
+from swagger_server.models.asset import Asset  # try to remove
+from swagger_server.models.update_path_body import UpdatePathBody  # try to remove
+from dlaas.tuilib.common import sanitize_dictionary
+
+
+# Grab Main Directiories Paths
 DOTENV_FILE = f"{os.getenv('HOME')}/.env"
 env_config = Config(RepositoryEnv(DOTENV_FILE))
 
 
+### START LOGGING CONFIGUARTION ###
 class CustomFormatter(logging.Formatter):
     def format(self, record):
         record.uuid = getattr(record, "uuid", "N/A")  # Default to 'N/A' if UUID is not present
         record.token = getattr(record, "token", "N/A")  # Default to 'N/A' if Token is not present
+        record.user_id = getattr(record, "user_id", "N/A")  # Default to 'N/A' if user_id is not present
         return super().format(record)
 
 
-# Configure logging with the custom formatter
-formatter = CustomFormatter("%(asctime)s - %(levelname)s - UUID: %(uuid)s - Token: %(token)s - %(message)s")
-handler = logging.StreamHandler()
-handler.setFormatter(formatter)
+# Set up for logging on file
+LOG_DIR = env_config.get("LOG_DIR", "/var/log/datalake")
+LOG_FILE = os.path.join(LOG_DIR, "api_datalake.log")
+
+# Ensure the log directory exists
+if not os.path.exists(LOG_DIR):
+    os.makedirs(LOG_DIR, exist_ok=True)
+
+# Configure logging to log to both file and console
+formatter = CustomFormatter(
+    "%(asctime)s - %(levelname)s - UUID: %(uuid)s - Token: %(token)s - User ID: %(user_id)s - %(message)s"
+)
+
+# File handler for logging to file
+file_handler = logging.FileHandler(LOG_FILE)
+file_handler.setFormatter(formatter)
+
+# Stream handler for logging to console
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(formatter)
+
+# Set up the root logger
 logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-logger.addHandler(handler)
+logger.setLevel(logging.DEBUG)
+logger.addHandler(file_handler)
+logger.addHandler(stream_handler)
+### END LOGGING CONFIGURATION ###
 
 
-# aider function for browse_files
+############################################
+### Helper Functions
+
+
+# Helper function for browse_files
 def translate_sql_to_mongo(filter_param):
     """
     Translates a simplified SQL-like filter string to a MongoDB query.
@@ -110,35 +137,149 @@ def translate_sql_to_mongo(filter_param):
     return query
 
 
-# aider function to query_post
-def escape_special_characters(content):
-    # Escape double quotes
-    content = content.replace('"', '\\"')
-    # Escape asterisks
-    content = content.replace("*", "\*")
-    # Escape single quotes
-    content = content.replace("'", "'")
-    # Escape parentheses
-    content = content.replace("(", "\(")
-    content = content.replace(")", "\)")
-    # Escape new lines
-    content = content.replace("\n", "\\n")
-    # Escape carriage returns
-    content = content.replace("\r", "\\r")
-    # Escape single quotes
-    content = content.replace("'", "\\'")
-
-    return content
-
-
-# aider function for path validation
-def is_valid_file_path(path):
+# Helper function modifying path to API
+def sanitize_path(path):
     """
-    Validates the file path format.
-    Implement the logic to check if the file path is valid.
-    For example, you might want to check if it contains illegal characters, etc.
+    Transforms a path into a valid file name
+
+    Args:
+        path (str): the relative path provided
+
+    Returns:
+        sanitized: the sanitized filename of the given relative path
     """
-    return not any(char in path for char in ["\\", ":", "*", "?", '"', "<", ">", "|"])
+
+    try:
+        # Convert to Path object for easier manipulation
+        p = Path(path)
+
+        # Extract filename only
+        filename = p.name
+
+        # Ensure filename does not start with prohibited characters
+        if filename.startswith("/") or filename.startswith("."):
+            raise ValueError("Invalid filename: starts with prohibited characters")
+
+        # Remove special characters from filename
+        sanitized = re.sub(r'[\\:*?"<>|$€#%!\'"+]', "", filename)
+
+        # Remove all instances of "../" and multiple slashes
+        sanitized = re.sub(r"\.\.\/?", "", sanitized)
+        sanitized = re.sub(r"\/+", "/", sanitized)
+        sanitized = re.sub(r"\.\.\.\.\/?", "", sanitized)
+
+        return sanitized
+
+    except Exception as e:
+        raise ValueError(f"Path sanitization failed: {e}")
+
+
+# Helper function verifying path to API
+def is_valid_filename(filename):
+    try:
+        # Convert to Path object for easier manipulation
+        p = Path(filename)
+
+        # Ensure filename does not start with prohibited characters
+        if p.is_absolute() or str(p).startswith("."):
+            return False
+
+        # Pattern to allow valid characters and prevent sequences of multiple slashes or dots
+        pattern = re.compile(r"^[a-zA-Z0-9_\-./]+$")
+        if not bool(pattern.match(str(p))):
+            return False
+
+        # Prevent any instance of ".." or multiple slashes
+        if ".." in str(p) or "//" in str(p):
+            return False
+
+        # Ensure it resolves to a file, not a directory
+        if p.is_dir():
+            return False
+
+        return True
+    except Exception:
+        return False
+
+
+# Helper content for query_post
+# Define a blacklist of characters for config dltui
+BLACKLIST = [";", "|", "&", "$", "<", ">", "`", "\\"]
+
+# Fields that should bypass the blacklist check
+BLACKLIST_EXCEPTIONS = ["s3_endpoint_url", "password"]
+
+# Define regex patterns for each key of config dltui
+REGEX_PATTERNS = {
+    # "user": r"^[a-zA-Z0-9_\-]+$",
+    # "password": r"^[a-zA-Z0-9_\-!@#\$%\^&\*\(\)]+$",
+    # "ip": r"^\d{1,3}(\.\d{1,3}){3}$",
+    # "port": r"^\d+$",
+    # "database": r"^[a-zA-Z0-9_\-]+$",
+    # "collection": r"^[a-zA-Z0-9_\-]+$",
+    # "s3_endpoint_url": r"^https?://[a-zA-Z0-9_\-\.]+(:\d+)?(/.*)?$",
+    # "s3_bucket": r"^[a-zA-Z0-9_\-]+$",
+    # "pfs_prefix_path": r"^/[a-zA-Z0-9_\-/]+$",
+    # "host": r"^[a-zA-Z0-9_\-\.]+$",
+    # "venv_path": r"^/[a-zA-Z0-9_\-/]+$",
+    # "ssh_key": r"^/[a-zA-Z0-9_\-/]+$",
+    # "compute_partition": r"^[a-zA-Z0-9_\-]+$",
+    # "upload_partition": r"^[a-zA-Z0-9_\-]+$",
+    # "account": r"^[a-zA-Z0-9_\-]+$",
+    # "qos": r"^[a-zA-Z0-9_\-]+$",
+    # "mail": r"^[a-zA-Z0-9_\-\.@]+$",
+    # "walltime": r"^\d{2}:\d{2}:\d{2}$",
+    # "nodes": r"^\d+$",
+    # "ntasks_per_node": r"^\d+$",
+    "user": [r"[a-zA-Z0-9_]+"],  # any single word (word: character sequence containing alphanumerics or _)
+    "password": [r"[a-zA-Z0-9_]+"],  # any single word
+    "ip": [
+        r"[a-zA-Z0-9_\.-]+[a-zA-Z0-9_-]+"
+    ],  # any word sequence (with - and _) optionally delimited by dots, but not ending with one
+    "port": [r"[0-9]+"],  # any number
+    "database": [r"[a-zA-Z0-9_]+"],  # any single word
+    "collection": [r"[a-zA-Z0-9_]+"],  # any single word
+    "s3_endpoint_url": [r"(https?:\/\/)?([a-zA-Z0-9_-]+\.)+[a-zA-Z0-9_-]+\/?"],  # "https://XXX.(XXX.)*n.XXX/",
+    "s3_bucket": [r"[a-zA-Z0-9_]+"],  # any single word
+    "pfs_prefix_path": [r"\/([a-zA-Z0-9_-]+\/?)+"],  # any word sequence (no .) delimited by slashes, starting with /
+    # config_server
+    "user": [r"[a-zA-Z0-9_]+"],  # any single word (word: character sequence containing alphanumerics or _)
+    "host": [
+        r"[a-zA-Z0-9_\.-]+[a-zA-Z0-9_-]+"
+    ],  # any word sequence (with - and _) optionally delimited by dots, but not ending with one
+    "venv_path": [r"^(~)?\/([a-zA-Z0-9_.-]+\/?)+"],  # any word sequence delimited by slashes, can start with ~ or /
+    "ssh_key": [r"^(~)?\/([a-zA-Z0-9_.-]+\/?)+"],  # any word sequence delimited by slashes, can start with ~ or /
+    "compute_partition": [r"[a-zA-Z0-9_]+"],  # any single word,
+    "upload_partition": [r"[a-zA-Z0-9_]+"],  # any single word
+    "account": [r"[a-zA-Z0-9_]+"],  # any single word
+    "qos": [r"[a-zA-Z0-9_]+"],  # any single word
+    "mail": [r"[a-zA-Z0-9_\.]+@[a-zA-Z0-9_\.]+"],  # any valid email type (no dashes or pluses)
+    "walltime": [r"([0-9]+-)?([0-9]+:)?([0-9]+:)?[0-9]+"],  # DD-HH:MM:SS
+    "nodes": [r"[0-9]+(k|m)?"],  # any number, possibly ending with k or m
+    "ntasks_per_node": [r"[0-9]+"],  # any number
+}
+
+
+# Helper function for query_post
+def validate_config(config):
+    for section, values in config.items():
+        for key, value in values.items():
+            # Skip blacklist check for specific keys
+            if key not in BLACKLIST_EXCEPTIONS:
+                # Check for blacklisted characters
+                if any(char in value for char in BLACKLIST):
+                    raise ValueError(f"Invalid character in {key}: {value}")
+
+            # Validate using regex pattern
+            if key in REGEX_PATTERNS:
+                pattern = REGEX_PATTERNS[key]
+                if not re.match(pattern, value):
+                    raise ValueError(f"Invalid format for {key}: {value}")
+
+
+########################################################################################################
+########################################################################################################
+### API ENDPOINT IMPLEMENTATIONS
 
 
 def browse_files():
@@ -151,16 +292,19 @@ def browse_files():
     Returns:
         Response: A JSON response containing the list of files or an error message.
     """
-    # Extract and verify the token
+    # Extract the token from the Authorization header
     auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
-        return Response("Unauthorized: Token missing or malformed\n", status=401)
-
-    token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
+        decoded_token = decode_token(token)
+        user_id = decoded_token.get("sub", "N/A")
+    else:
+        # Handle cases where the Authorization header is missing or improperly formatted
+        return jsonify({"message": "Unauthorized: Token missing or malformed\n"}), 401
 
     filter_param = request.args.get("filter", None)  # Extracting the SQL-like filter parameter
 
-    logger.info(f"API call to browse_files with filter: {filter_param}", extra={"token": token})
+    logger.info(f"API call to browse_files with filter: {filter_param}", extra={"token": token, "user_id": user_id})
 
     try:
         mongo_query = translate_sql_to_mongo(filter_param) if filter_param is not None else {}
@@ -177,11 +321,11 @@ def browse_files():
 
         file_list = [file["s3_key"] for file in files]
 
-        return Response(json.dumps(file_list), mimetype="application/json")
+        return jsonify({"files": file_list}), 200
 
     except Exception as e:
         logger.error(f"An error occurred in browse_files: {str(e)}")
-        return Response("Internal Server Error\n", status=500)
+        return jsonify({"error": "Internal Server Error", "message": str(e)}), 500
 
 
 def delete_file(file_name, **kwargs):
@@ -203,11 +347,16 @@ def delete_file(file_name, **kwargs):
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
         token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
+        decoded_token = decode_token(token)
+        user_id = decoded_token.get("sub", "N/A")
     else:
         # Handle cases where the Authorization header is missing or improperly formatted
         return {"message": "Unauthorized: Token missing or malformed\n"}, 401
 
-    logger.info("API call to %s", "delete_id_get", extra={"File": file_name, "token": token})
+    sanitized_filename = sanitize_path(file_name)
+    logger.info(
+        "API call to %s", "delete_id_get", extra={"File": sanitized_filename, "token": token, "user_id": user_id}
+    )
 
     # Initialize MongoDB client with decouple
     mongo_host = env_config.get("MONGO_HOST", default="localhost")
@@ -220,7 +369,11 @@ def delete_file(file_name, **kwargs):
     collection = db[mongo_collection_name]
 
     try:
-        existing_entry = collection.find_one({"s3_key": file_name})
+        #  validate the file path
+        if not is_valid_filename(sanitized_filename):
+            return "Invalid filename", 400
+
+        existing_entry = collection.find_one({"s3_key": sanitized_filename})
 
         # Debug print: Output the existing_entry after MongoDB query
         print(f"Debug: existing_entry after query = {existing_entry}")
@@ -234,10 +387,10 @@ def delete_file(file_name, **kwargs):
 
             s3.delete_object(
                 Bucket=env_config.get("S3_BUCKET"),
-                Key=file_name,
+                Key=sanitized_filename,
             )
 
-            result = collection.delete_one({"s3_key": file_name})
+            result = collection.delete_one({"s3_key": sanitized_filename})
 
             if result.deleted_count:
                 return "File and its database entry deleted successfully", 200
@@ -269,20 +422,31 @@ def download_id_get(file_name, **kwargs):  # noqa: E501
 
     if auth_header and auth_header.startswith("Bearer "):
         token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
+        decoded_token = decode_token(token)
+        user_id = decoded_token.get("sub", "N/A")
     else:
         # Handle cases where the Authorization header is missing or improperly formatted
         return {"message": "Unauthorized: Token missing or malformed\n"}, 401
 
-    logger.info("API call to %s", "download_id_get", extra={"File": file_name, "token": token})
+    # helper function to polish path to file
+    sanitized_filename = sanitize_path(file_name)
+
+    logger.info(
+        "API call to %s", "download_id_get", extra={"File": sanitized_filename, "token": token, "user_id": user_id}
+    )
 
     try:
+        #  validate the file path
+        if not is_valid_filename(sanitized_filename):
+            return "Invalid filename", 400
+
         # NOTE: S3 credentials must be saved in ~/.aws/config file
         s3 = boto3.client(
             service_name="s3",
             endpoint_url=env_config.get("S3_ENDPOINT_URL"),
         )
 
-        s3_object = s3.get_object(Bucket=env_config.get("S3_BUCKET"), Key=file_name)
+        s3_object = s3.get_object(Bucket=env_config.get("S3_BUCKET"), Key=sanitized_filename)
 
         file_content = s3_object["Body"].read()
 
@@ -313,8 +477,8 @@ def query_post(query_file, python_file=None, **kwargs):
         tuple: A tuple containing the response message and status code.
     """
     # Information printed for system log
-    print("Dictionary with token info:")
-    print(kwargs)
+    logger.debug("Dictionary with token info:")
+    logger.debug(kwargs)
 
     try:
         config_json = json.loads(request.form["config_json"])
@@ -326,12 +490,14 @@ def query_post(query_file, python_file=None, **kwargs):
 
     if auth_header and auth_header.startswith("Bearer "):
         token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
+        decoded_token = decode_token(token)
+        user_id = decoded_token.get("sub", "N/A")
     else:
         # Handle cases where the Authorization header is missing or improperly formatted
         return {"message": "Unauthorized: Token missing or malformed"}, 401
 
     unique_id = str(uuid.uuid4().hex)
-    logger.info("API call to %s", "query_post", extra={"uuid": unique_id, "token": token})
+    logger.info("API call to %s", "query_post", extra={"uuid": unique_id, "token": token, "user_id": user_id})
 
     try:
         # Ensure the query file and config JSON are provided
@@ -339,11 +505,17 @@ def query_post(query_file, python_file=None, **kwargs):
             return "Missing query file or configuration", 400
 
         if config_json:
-            # Parse the configuration JSON
             try:
+                sanitize_dictionary(config_json)
+            except ValueError as e:
+                logger.error(f"Validation error: {str(e)}")
+                return {"message": str(e)}, 400
+
+                # Parse the configuration JSON
                 config_server = config_json["config_server"]
             except KeyError:
                 config_server = None
+
             try:
                 config_hpc = config_json["config_hpc"]
             except KeyError:
@@ -352,8 +524,8 @@ def query_post(query_file, python_file=None, **kwargs):
             config_hpc = None
             config_server = None
 
-        print(f"config_hpc: {config_hpc}")
-        print(f"config_server: {config_server}")
+        logger.debug(f"config_hpc: {config_hpc}")
+        logger.debug(f"config_server: {config_server}")
 
         # Generate a unique ID and create a temporary directory
         unique_id = str(uuid.uuid4().hex)
@@ -424,11 +596,18 @@ def replace_entry(file, json_data, **kwargs):
 
     if auth_header and auth_header.startswith("Bearer "):
         token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
+        decoded_token = decode_token(token)
+        user_id = decoded_token.get("sub", "N/A")
     else:
         # Handle cases where the Authorization header is missing or improperly formatted
         return {"message": "Unauthorized: Token missing or malformed"}, 401
 
-    logger.info("API call to %s", "replace_entry", extra={"File": file.filename, "token": token})
+    # helper function to polish path to file
+    sanitized_filename = sanitize_path(file.filename)
+
+    logger.info(
+        "API call to %s", "replace_entry", extra={"File": sanitized_filename, "token": token, "user_id": user_id}
+    )
 
     # Initialize MongoDB client
     mongo_host = env_config.get("MONGO_HOST", default="localhost")
@@ -440,10 +619,14 @@ def replace_entry(file, json_data, **kwargs):
     db = client[mongo_db_name]
     collection = db[mongo_collection_name]
 
-    if not collection.find_one({"s3_key": file.filename}):
+    if not collection.find_one({"s3_key": sanitized_filename}):
         return f"Replacement failed, file not found. Please use POST method to create a new entry", 400
 
     try:
+        #  validate the file path
+        if not is_valid_filename(sanitized_filename):
+            return "Invalid filename", 400
+
         # NOTE: S3 credentials must be saved in ~/.aws/config file
         s3 = boto3.client(
             service_name="s3",
@@ -453,15 +636,15 @@ def replace_entry(file, json_data, **kwargs):
         # Insert json_data into MongoDB
         json_data_str = json_data.read().decode("utf-8")
         json_data_dict = json.loads(json_data_str)
-        json_data_dict["s3_key"] = file.filename
-        json_data_dict["path"] = f"{env_config.get('PFS_PATH_PREFIX')}/{file.filename}"
+        json_data_dict["s3_key"] = sanitized_filename
+        json_data_dict["path"] = f"{env_config.get('PFS_PATH_PREFIX')}/{sanitized_filename}"
 
         s3.upload_fileobj(
             Fileobj=file,
             Bucket=env_config.get("S3_BUCKET"),
-            Key=file.filename,
+            Key=sanitized_filename,
         )
-        collection.find_one_and_replace({"s3_key": file.filename}, json_data_dict)
+        collection.find_one_and_replace({"s3_key": sanitized_filename}, json_data_dict)
 
         return "File and Metadata replacement successful.", 201
 
@@ -490,15 +673,18 @@ def update_entry(json_data, **kwargs):  # noqa: E501
 
     if auth_header and auth_header.startswith("Bearer "):
         token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
+        decoded_token = decode_token(token)
+        user_id = decoded_token.get("sub", "N/A")
     else:
         return {"message": "Unauthorized: Token missing or malformed"}, 401
 
-    logger.info("API call to %s", "update_entry", extra={"token": token})
+    logger.info("API call to %s", "update_entry", extra={"token": token, "user_id": user_id})
 
     # Verify that both 'file' (S3_key) and 'json_data' are passed correctly
     if "file" not in request.form or "json_data" not in request.files:
         return {"message": "Missing 'file' or 'json_data'"}, 400
 
+    # Verify if implement sanification
     file = request.form["file"]
 
     # Initialize MongoDB client
@@ -551,11 +737,16 @@ def upload_post(file, json_data, **kwargs):
 
     if auth_header and auth_header.startswith("Bearer "):
         token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
+        decoded_token = decode_token(token)
+        user_id = decoded_token.get("sub", "N/A")
     else:
         # Handle cases where the Authorization header is missing or improperly formatted
         return {"message": "Unauthorized: Token missing or malformed"}, 401
 
-    logger.info("API call to %s", "upload_post", extra={"File": file.filename, "token": token})
+    # helper function to polish path to file
+    sanitized_filename = sanitize_path(file.filename)
+
+    logger.info("API call to %s", "upload_post", extra={"File": sanitized_filename, "token": token, "user_id": user_id})
 
     # Initialize MongoDB client
     mongo_host = env_config.get("MONGO_HOST", default="localhost")
@@ -568,6 +759,10 @@ def upload_post(file, json_data, **kwargs):
     collection = db[mongo_collection_name]
 
     try:
+        #  validate the file path
+        if not is_valid_filename(sanitized_filename):
+            return "Invalid filename", 400
+
         # NOTE: S3 credentials must be saved in ~/.aws/config file
         s3 = boto3.client(
             service_name="s3",
@@ -578,17 +773,17 @@ def upload_post(file, json_data, **kwargs):
         # Properly read json_data and insert it into MongoDB
         json_data_str = json_data.read().decode("utf-8")
         json_data_dict = json.loads(json_data_str)
-        json_data_dict["s3_key"] = file.filename
-        json_data_dict["path"] = f"{env_config.get('PFS_PATH_PREFIX')}/{file.filename}"
+        json_data_dict["s3_key"] = sanitized_filename
+        json_data_dict["path"] = f"{env_config.get('PFS_PATH_PREFIX')}/{sanitized_filename}"
 
-        if collection.find_one({"s3_key": file.filename}):
+        if collection.find_one({"s3_key": sanitized_filename}):
             return f"Upload Failed, entry is already present. Please use PUT method to update an existing entry", 400
 
         # Read file content into a binary stream
         s3.upload_fileobj(
             Fileobj=file,
             Bucket=env_config.get("S3_BUCKET"),
-            Key=file.filename,
+            Key=sanitized_filename,
         )
         collection.insert_one(json_data_dict)
 
@@ -604,6 +799,6 @@ def upload_post(file, json_data, **kwargs):
         # This assumes that all inserted documents have a unique 'path'
         if "json_data_dict" in locals():
             # paths_to_remove = [doc.get("s3_key", "") for doc in json_data_dict]
-            collection.delete_one({"s3_key": file.filename})
+            collection.delete_one({"s3_key": sanitized_filename})
 
         return f"Upload Failed: {str(e)}", 400
