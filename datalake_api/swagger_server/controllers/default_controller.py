@@ -139,66 +139,42 @@ def translate_sql_to_mongo(filter_param):
 
 # Helper function modifying path to API
 def sanitize_path(path):
-    """
-    Transforms a path into a valid file name
-
-    Args:
-        path (str): the relative path provided
-
-    Returns:
-        sanitized: the sanitized filename of the given relative path
-    """
-
     try:
-        # Convert to Path object for easier manipulation
-        p = Path(path)
-
-        # Extract filename only
-        filename = p.name
-
-        # Ensure filename does not start with prohibited characters
-        if filename.startswith("/") or filename.startswith("."):
-            raise ValueError("Invalid filename: starts with prohibited characters")
-
-        # Remove special characters from filename
-        sanitized = re.sub(r'[\\:*?"<>|$€#%!\'"+]', "", filename)
-
-        # Remove all instances of "../" and multiple slashes
-        sanitized = re.sub(r"\.\.\/?", "", sanitized)
-        sanitized = re.sub(r"\/+", "/", sanitized)
-        sanitized = re.sub(r"\.\.\.\.\/?", "", sanitized)
-
-        return sanitized
+        filename = os.path.basename(path)
+        
+        # 1. Check for prohibited characters and sequences
+        if ('/' in filename or 
+            '\0' in filename or 
+            '\\' in filename or 
+            '..' in filename or 
+            filename.startswith('.')):
+            raise ValueError("Filename contains prohibited characters or sequences")
+        
+        # 2. Remove potentially dangerous characters, including ;()` and **
+        sanitized = re.sub(r'[*?"<>|$€#%!\'";\(\)`]+', "", filename)
+        
+        # 3. Ensure only allowed characters remain
+        if not re.match(r'^[a-zA-Z0-9_\-.]+$', sanitized):
+            raise ValueError("Filename contains disallowed characters")
+        
+        # 4. Final security check using normpath and basename
+        normalized_path = os.path.normpath(sanitized)
+        final_filename = os.path.basename(normalized_path)
+        
+        if final_filename != normalized_path:
+            raise ValueError("Path contains directory traversal")
+        
+        return final_filename
 
     except Exception as e:
-        raise ValueError(f"Path sanitization failed: {e}")
+        raise ValueError(f"Invalid filename: {str(e)}")
 
-
-# Helper function verifying path to API
+# Helper function validating filename
 def is_valid_filename(filename):
     try:
-        # Convert to Path object for easier manipulation
-        p = Path(filename)
-
-        # Ensure filename does not start with prohibited characters
-        if p.is_absolute() or str(p).startswith("."):
-            return False
-
-        # Pattern to allow valid characters and prevent sequences of multiple slashes or dots
-        pattern = re.compile(r"^[a-zA-Z0-9_\-./]+$")
-        if not bool(pattern.match(str(p))):
-            return False
-
-        # Prevent any instance of ".." or multiple slashes
-        if ".." in str(p) or "//" in str(p):
-            return False
-
-        # Ensure it resolves to a file, not a directory
-        if p.is_dir():
-            return False
-
-        return True
-    except Exception:
+        sanitize_path(filename)
+        return not os.path.isdir(filename)  # Additional check to ensure it's not a directory
+    except ValueError:
         return False
 
 
