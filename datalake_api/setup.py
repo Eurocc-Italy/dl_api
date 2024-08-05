@@ -20,7 +20,7 @@ REQUIRES = [
     "swagger-ui-bundle",
     "pymongo == 4.5.0",
     "urllib3 == 1.26",
-    "dl-tui @ git+https://github.com/Eurocc-Italy/dl_tui",
+    "dl_tui @ git+https://github.com/Eurocc-Italy/dl_tui",
     "boto3",
     "python-decouple",
     "python-dotenv",
@@ -30,7 +30,7 @@ REQUIRES = [
 setup(
     name=NAME,
     version=VERSION,
-    description="dl-api",
+    description="dl_api",
     author_email="",
     url="",
     keywords=["Swagger", "DTaaS API"],
