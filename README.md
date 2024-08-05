@@ -1,12 +1,16 @@
 # DTaaS API Brief intro
 
+This repository is part of the EuroCC-Italy Data Lake as a Service codebase. The repositories in this codebase are:
+
+  - [`dl_tui`](https://github.com/Eurocc-Italy/dl_tui): (Text User Interface)
+  - [`dl_api`](https://github.com/Eurocc-Italy/dl_api): (API)
+  - [`dl_deploy`](https://github.com/Eurocc-Italy/dl_deploy): (Ansible playbook for self-deploy)
+
+The User Guide can be found in PDF form in the [dl_deploy](https://github.com/Eurocc-Italy/dl_deploy) repository.
+
 ## Find a more detailed description and the code in the datalake_api
 
 - datalake_api (Main Folder): This is the primary directory for the API server. It contains all the necessary code and resources to run the datalake service.
-
-## Why COCO
-
-COCO_dataset containes image file used in support of the development of the API. 
 
 ## Configuration
 - .env File: This file is crucial for setting up the environment. It defines essential environment variables, including paths and MongoDB specifications necessary for the API server's operation.
