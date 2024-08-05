@@ -4,7 +4,7 @@ import sys
 from setuptools import setup, find_packages
 
 NAME = "swagger_server"
-VERSION = "1.1.0"
+VERSION = "1.0"
 # To install the library, run the following
 #
 # python setup.py install
@@ -20,7 +20,7 @@ REQUIRES = [
     "swagger-ui-bundle",
     "pymongo == 4.5.0",
     "urllib3 == 1.26",
-    "dl-tui @ git+https://gitlab.hpc.cineca.it/eurocc/dl-tui",
+    "dl-tui @ git+https://github.com/Eurocc-Italy/dl_tui",
     "boto3",
     "python-decouple",
     "python-dotenv",
