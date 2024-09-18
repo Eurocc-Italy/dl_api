@@ -141,33 +141,30 @@ def translate_sql_to_mongo(filter_param):
 def sanitize_path(path):
     try:
         filename = os.path.basename(path)
-        
+
         # 1. Check for prohibited characters and sequences
-        if ('/' in filename or 
-            '\0' in filename or 
-            '\\' in filename or 
-            '..' in filename or 
-            filename.startswith('.')):
+        if "/" in filename or "\0" in filename or "\\" in filename or ".." in filename or filename.startswith("."):
             raise ValueError("Filename contains prohibited characters or sequences")
-        
+
         # 2. Remove potentially dangerous characters, including ;()` and **
         sanitized = re.sub(r'[*?"<>|$€#%!\'";\(\)`]+', "", filename)
-        
+
         # 3. Ensure only allowed characters remain
-        if not re.match(r'^[a-zA-Z0-9_\-.]+$', sanitized):
+        if not re.match(r"^[a-zA-Z0-9_\-.]+$", sanitized):
             raise ValueError("Filename contains disallowed characters")
-        
+
         # 4. Final security check using normpath and basename
         normalized_path = os.path.normpath(sanitized)
         final_filename = os.path.basename(normalized_path)
-        
+
         if final_filename != normalized_path:
             raise ValueError("Path contains directory traversal")
-        
+
         return final_filename
 
     except Exception as e:
         raise ValueError(f"Invalid filename: {str(e)}")
+
 
 # Helper function validating filename
 def is_valid_filename(filename):
@@ -487,7 +484,7 @@ def query_post(query_file, python_file=None, **kwargs):
                 logger.error(f"Validation error: {str(e)}")
                 return {"message": str(e)}, 400
 
-                # Parse the configuration JSON
+            try:
                 config_server = config_json["config_server"]
             except KeyError:
                 config_server = None
