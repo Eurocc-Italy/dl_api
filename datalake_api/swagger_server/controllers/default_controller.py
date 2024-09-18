@@ -479,20 +479,22 @@ def query_post(query_file, python_file=None, **kwargs):
 
         if config_json:
             try:
-                sanitize_dictionary(config_json)
+                config_server = config_json["config_server"]
+                sanitize_dictionary(config_server)
+            except KeyError:
+                config_server = None
             except ValueError as e:
                 logger.error(f"Validation error: {str(e)}")
                 return {"message": str(e)}, 400
 
             try:
-                config_server = config_json["config_server"]
-            except KeyError:
-                config_server = None
-
-            try:
                 config_hpc = config_json["config_hpc"]
+                sanitize_dictionary(config_server)
             except KeyError:
                 config_hpc = None
+            except ValueError as e:
+                logger.error(f"Validation error: {str(e)}")
+                return {"message": str(e)}, 400
         else:
             config_hpc = None
             config_server = None
