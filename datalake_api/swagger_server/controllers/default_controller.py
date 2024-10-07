@@ -544,7 +544,7 @@ def query_post(query_file, python_file=None, **kwargs):
                 stderr=subprocess.PIPE,
             ).communicate()
 
-        shutil.rmtree(unique_id)  # Removing temporary directory. Comment for debugging.
+        shutil.rmtree(unique_id)  # Removing temporary directory. NOTE: Comment for debugging.
 
         return f"Files processed successfully, ID: {unique_id}", 200
 
@@ -665,7 +665,7 @@ def launch_container(query_file, container_file=None, container_url=None, **kwar
                 stderr=subprocess.PIPE,
             ).communicate()
 
-        #shutil.rmtree(unique_id)  # Removing temporary directory. Comment for debugging.
+        shutil.rmtree(unique_id)  # Removing temporary directory. NOTE: Comment for debugging.
 
         return f"Files processed successfully, ID: {unique_id}", 200
 
