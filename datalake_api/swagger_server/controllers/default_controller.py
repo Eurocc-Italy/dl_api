@@ -89,10 +89,12 @@ def translate_sql_to_mongo(filter_param):
     """
     # Operator mappings
     operators_mapping = {
+        ">=": "$gte",
+        "<=": "$lte",
+        "!=": "$ne",
         "=": "$eq",
         ">": "$gt",
         "<": "$lt",
-        "!=": "$ne",
     }
 
     def parse_condition(condition):
@@ -504,13 +506,14 @@ def query_post(query_file, python_file=None, **kwargs):
 
         # Generate a unique ID and create a temporary directory
         unique_id = str(uuid.uuid4().hex)
-        tdir = mkdtemp(prefix=unique_id, dir=os.getcwd())
+        os.makedirs(unique_id)
+        # tdir = mkdtemp(prefix=unique_id, dir=os.getcwd()) # NOTE: otherwise, it appends a random suffix to the job ID
 
         query_content = query_file.read().decode("utf-8")
 
         # Save script.py in the temporary directory if provided
         script_filename = f"user_script_{unique_id}.py"
-        script_path = os.path.join(tdir, script_filename)
+        script_path = os.path.join(unique_id, script_filename)
         if python_file:
             with open(script_path, "w") as script_out:
                 script_out.write(python_file.read().decode("utf-8"))
@@ -525,14 +528,135 @@ def query_post(query_file, python_file=None, **kwargs):
             "config_hpc": config_hpc or {},  # Insert empty dict if None
             "config_server": config_server or {},  # Insert empty dict if None
         }
-        launch_path = os.path.join(tdir, "launch.json")
+        launch_path = os.path.join(unique_id, "launch.json")
         with open(launch_path, "w") as launch_out:
             json.dump(launch_data, launch_out, indent=4)
 
         # Execute the command within the temporary directory
         # NOTE : same as before, since we're in the temporary directory we can just send the relative path of
         # the json file, otherwise the client version on HPC gets a wrong path
-        with pushd(tdir):
+        with pushd(unique_id):
+            command = f"dl_tui_server --python launch.json"
+            stdout, stderr = subprocess.Popen(
+                command,
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            ).communicate()
+
+        shutil.rmtree(unique_id)  # Removing temporary directory. Comment for debugging.
+
+        return f"Files processed successfully, ID: {unique_id}", 200
+
+    except Exception as e:
+        logger.error(f"An error occurred: {str(e)}")
+        return f"An error occurred: {str(e)}", 500
+
+def launch_container(query_file, container_file=None, container_url=None, **kwargs):  # noqa: E501
+    """Launch Singularity container on datalake items matching the query
+
+    Args:
+        query_file (FileStorage): The SQL query file.
+        container_file (FileStorage, optional): The Singularity container for data manipulation.
+        container_url (str, optional): The URL where the Singularity container can be downloaded.
+        exec_command : (str, optional): The command to be launched within the container (with its own options and flags)
+        **kwargs: Additional keyword arguments (contains token information).
+
+    Returns:
+        tuple: A tuple containing the response message and status code.
+    """
+    # Information printed for system log
+    logger.debug("Dictionary with token info:")
+    logger.debug(kwargs)
+
+    try:
+        exec_command = request.form["exec_command"]
+    except KeyError:
+        return "Missing query file or configuration", 400
+
+    try:
+        config_json = json.loads(request.form["config_json"])
+    except KeyError:
+        config_json = None
+
+    # Extract the token from the Authorization header
+    auth_header = request.headers.get("Authorization")
+
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
+        decoded_token = decode_token(token)
+        user_id = decoded_token.get("sub", "N/A")
+    else:
+        # Handle cases where the Authorization header is missing or improperly formatted
+        return {"message": "Unauthorized: Token missing or malformed"}, 401
+
+    unique_id = str(uuid.uuid4().hex)
+    logger.info("API call to %s", "launch_container", extra={"uuid": unique_id, "token": token, "user_id": user_id})
+
+    try:
+        # Ensure the query file and config JSON are provided
+        if not query_file:
+            return "Missing query file or configuration", 400
+
+        if config_json:
+            try:
+                config_server = config_json["config_server"]
+                sanitize_dictionary(config_server)
+            except KeyError:
+                config_server = None
+            except ValueError as e:
+                logger.error(f"Validation error: {str(e)}")
+                return {"message": str(e)}, 400
+
+            try:
+                config_hpc = config_json["config_hpc"]
+                sanitize_dictionary(config_server)
+            except KeyError:
+                config_hpc = None
+            except ValueError as e:
+                logger.error(f"Validation error: {str(e)}")
+                return {"message": str(e)}, 400
+        else:
+            config_hpc = None
+            config_server = None
+
+        logger.debug(f"config_hpc: {config_hpc}")
+        logger.debug(f"config_server: {config_server}")
+
+        # Generate a unique ID and create a temporary directory
+        unique_id = str(uuid.uuid4().hex)
+        os.makedirs(unique_id)
+        # tdir = mkdtemp(prefix=unique_id, dir=os.getcwd()) # NOTE: otherwise, it appends a random suffix to the job ID
+
+        query_content = query_file.read().decode("utf-8")
+
+        # Save container in the temporary directory if provided
+        container_filename = f"container_{unique_id}.sif"
+        container_path = os.path.join(unique_id, container_filename)
+        if container_file:
+            with open(container_path, "wb") as script_out:
+                script_out.write(container_file.read())
+
+        # Prepare and save launch.json in the temporary directory
+        # NOTE : container_path should be a relative path to the temporary directory, otherwise on the "launcher"
+        # it has a path like /home/centos/.../{uuid4.hex}/container.sif which will not be found on HPC
+        launch_data = {
+            "sql_query": query_content,
+            "container_path": os.path.basename(container_path) if container_file else None,
+            "container_url": container_url,
+            "exec_command": exec_command,
+            "id": unique_id,
+            "config_hpc": config_hpc or {},  # Insert empty dict if None
+            "config_server": config_server or {},  # Insert empty dict if None
+        }
+        launch_path = os.path.join(unique_id, "launch.json")
+        with open(launch_path, "w") as launch_out:
+            json.dump(launch_data, launch_out, indent=4)
+
+        # Execute the command within the temporary directory
+        # NOTE : same as before, since we're in the temporary directory we can just send the relative path of
+        # the json file, otherwise the client version on HPC gets a wrong path
+        with pushd(unique_id):
             command = f"dl_tui_server launch.json"
             stdout, stderr = subprocess.Popen(
                 command,
@@ -541,14 +665,13 @@ def query_post(query_file, python_file=None, **kwargs):
                 stderr=subprocess.PIPE,
             ).communicate()
 
-        shutil.rmtree(tdir)  # Removing temporary directory. Comment for debugging.
+        #shutil.rmtree(unique_id)  # Removing temporary directory. Comment for debugging.
 
         return f"Files processed successfully, ID: {unique_id}", 200
 
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}")
         return f"An error occurred: {str(e)}", 500
-
 
 def replace_entry(file, json_data, **kwargs):
     """
