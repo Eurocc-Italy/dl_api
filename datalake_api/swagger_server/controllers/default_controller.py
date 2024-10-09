@@ -9,6 +9,7 @@ import uuid
 from io import BytesIO
 from pathlib import Path
 from tempfile import mkdtemp
+from datetime import datetime
 
 from decouple import Config, RepositoryEnv
 from flask import send_file, request, Response, jsonify
@@ -737,6 +738,7 @@ def replace_entry(file, json_data, **kwargs):
         json_data_dict = json.loads(json_data_str)
         json_data_dict["s3_key"] = sanitized_filename
         json_data_dict["path"] = f"{env_config.get('PFS_PATH_PREFIX')}/{sanitized_filename}"
+        json_data_dict["upload_date"] = str(datetime.now())
 
         s3.upload_fileobj(
             Fileobj=file,
@@ -874,6 +876,7 @@ def upload_post(file, json_data, **kwargs):
         json_data_dict = json.loads(json_data_str)
         json_data_dict["s3_key"] = sanitized_filename
         json_data_dict["path"] = f"{env_config.get('PFS_PATH_PREFIX')}/{sanitized_filename}"
+        json_data_dict["upload_date"] = str(datetime.now())
 
         if collection.find_one({"s3_key": sanitized_filename}):
             return f"Upload Failed, entry is already present. Please use PUT method to update an existing entry", 400
