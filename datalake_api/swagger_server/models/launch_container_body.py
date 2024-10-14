@@ -14,34 +14,29 @@ class LaunchContainerBody(Model):
 
     Do not edit the class manually.
     """
-    def __init__(self, query_file: str=None, container_file: str=None, container_url: str=None, exec_command: str=None):  # noqa: E501
+    def __init__(self, query_file: str=None, container_file: str=None, exec_command: str=None):  # noqa: E501
         """LaunchContainerBody - a model defined in Swagger
 
         :param query_file: The query_file of this LaunchContainerBody.  # noqa: E501
         :type query_file: str
         :param container_file: The container_file of this LaunchContainerBody.  # noqa: E501
         :type container_file: str
-        :param container_url: The container_url of this LaunchContainerBody.  # noqa: E501
-        :type container_url: str
         :param exec_command: The exec_command of this LaunchContainerBody.  # noqa: E501
         :type exec_command: str
         """
         self.swagger_types = {
             'query_file': str,
             'container_file': str,
-            'container_url': str,
             'exec_command': str
         }
 
         self.attribute_map = {
             'query_file': 'query_file',
             'container_file': 'container_file',
-            'container_url': 'container_url',
             'exec_command': 'exec_command'
         }
         self._query_file = query_file
         self._container_file = container_file
-        self._container_url = container_url
         self._exec_command = exec_command
 
     @classmethod
@@ -98,27 +93,6 @@ class LaunchContainerBody(Model):
         """
 
         self._container_file = container_file
-
-    @property
-    def container_url(self) -> str:
-        """Gets the container_url of this LaunchContainerBody.
-
-
-        :return: The container_url of this LaunchContainerBody.
-        :rtype: str
-        """
-        return self._container_url
-
-    @container_url.setter
-    def container_url(self, container_url: str):
-        """Sets the container_url of this LaunchContainerBody.
-
-
-        :param container_url: The container_url of this LaunchContainerBody.
-        :type container_url: str
-        """
-
-        self._container_url = container_url
 
     @property
     def exec_command(self) -> str:

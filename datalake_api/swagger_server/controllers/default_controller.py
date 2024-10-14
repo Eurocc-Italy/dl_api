@@ -553,7 +553,7 @@ def query_post(query_file, python_file=None, **kwargs):
         logger.error(f"An error occurred: {str(e)}")
         return f"An error occurred: {str(e)}", 500
 
-def launch_container(query_file, container_file=None, container_url=None, **kwargs):  # noqa: E501
+def launch_container(query_file, container_file=None, **kwargs):  # noqa: E501
     """Launch Singularity container on datalake items matching the query
 
     Args:
@@ -569,6 +569,11 @@ def launch_container(query_file, container_file=None, container_url=None, **kwar
     # Information printed for system log
     logger.debug("Dictionary with token info:")
     logger.debug(kwargs)
+
+    try:
+        container_url = request.form["container_url"]
+    except KeyError:
+        container_url = None
 
     try:
         exec_command = request.form["exec_command"]
