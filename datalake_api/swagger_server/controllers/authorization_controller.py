@@ -21,7 +21,7 @@ env_config = Config(RepositoryEnv(DOTENV_FILE))
 
 # Constants for JWT token generation and verification
 JWT_ISSUER = env_config.get("JWT_ISSUER")
-JWT_SECRET = env_config.get("JWT_SECRET")
+JWT_SECRET = env_config.get("JWT_SECRET").split()[0]
 JWT_LIFETIME_SECONDS = int(env_config.get("JWT_LIFETIME_SECONDS"))
 JWT_ALGORITHM = env_config.get("JWT_ALGORITHM")
 MAC_HEX = uuid.getnode()
@@ -31,8 +31,7 @@ def decode_token(token):
     try:
         secret = int(JWT_SECRET, 16)
     except ValueError:
-        print("ERROR: JWT_SECRET key must be a hexadecimal number.")
-        return
+        raise ValueError("JWT_SECRET key must be a hexadecimal number.")
 
     try:
         decoded_token = jwt.decode(token, hex(secret * MAC_HEX), algorithms=[JWT_ALGORITHM])
@@ -46,8 +45,7 @@ def generate_token(user_id, duration=JWT_LIFETIME_SECONDS):
     try:
         secret = int(JWT_SECRET, 16)
     except ValueError:
-        print("ERROR: JWT_SECRET key must be a hexadecimal number.")
-        return
+        raise ValueError("JWT_SECRET key must be a hexadecimal number.")
 
     timestamp = _current_timestamp()
     payload = {
