@@ -7,37 +7,6 @@ servers:
   - url: http://localhost:8080/v1
 paths:
 
-  /job_status:
-    get:
-      summary: Show status of jobs running on HPC
-      operationId: job_status
-      parameters:
-        - name: user
-          in: query
-          description: Username for which to filter jobs
-          required: false
-          schema:
-            type: string
-      responses:
-        '200':
-          description: List of jobs successfully retrieved.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
-                  description: Table showing job status.
-        '400':
-          description: Bad Request - Incorrect Format or Parameters
-        '401':
-          description: Unauthorized - Invalid Token
-        '403':
-          description: Forbidden - Insufficient Permissions
-        '500':
-          description: Internal Server Error
-      x-openapi-router-controller: swagger_server.controllers.default_controller
-
   /browse_files:
     get:
       summary: List files from the datalake with optional SQL-like filtering
@@ -149,8 +118,6 @@ paths:
           description: Forbidden - Insufficient Permissions
         '422':
           description: Unprocessable Entity - Query or Processing Error
-        '501':
-          description: Job not submitted
       x-openapi-router-controller: swagger_server.controllers.default_controller
 
   /replace:
