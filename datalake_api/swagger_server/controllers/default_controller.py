@@ -27,6 +27,7 @@ from swagger_server import util  # try to remove
 from swagger_server.models.asset import Asset  # try to remove
 from swagger_server.models.update_path_body import UpdatePathBody  # try to remove
 from dlaas.tuilib.common import sanitize_dictionary
+from dlaas.tuilib.server import check_jobs_status
 
 
 # Grab Main Directiories Paths
@@ -257,6 +258,42 @@ def validate_config(config):
 ########################################################################################################
 ### API ENDPOINT IMPLEMENTATIONS
 
+def job_status():
+    """
+    Shows information about job status on HPC, optionally filtering for Data Lake user.
+    Available info:
+
+    Args:
+        user (str, optional): Data Lake username for which jobs should be filtered
+
+    Returns:
+        Response: A JSON response containing the table with job status info.
+    """
+
+    # Extract the token from the Authorization header
+    auth_header = request.headers.get("Authorization")
+
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
+        decoded_token = decode_token(token)
+        user_id = decoded_token.get("sub", "N/A")
+    else:
+        # Handle cases where the Authorization header is missing or improperly formatted
+        return {"message": "Unauthorized: Token missing or malformed"}, 401
+
+    user = request.args.get("user", None)  # Extracting the SQL-like filter parameter
+    logger.info(f"API call to job_status with user: {user}", extra={"token": token, "user_id": user_id})
+
+    try:
+        jobs = check_jobs_status()
+        if jobs:
+            return jsonify({"jobs": jobs}), 200
+        else:
+            return jsonify({"jobs": {}}), 200
+        
+    except Exception as e:
+        logger.error(f"An error occurred in job_status: {str(e)}")
+        return jsonify({"error": "Internal Server Error", "message": str(e)}), 500
 
 def browse_files():
     """
@@ -537,7 +574,7 @@ def query_post(query_file, python_file=None, **kwargs):
         # NOTE : same as before, since we're in the temporary directory we can just send the relative path of
         # the json file, otherwise the client version on HPC gets a wrong path
         with pushd(unique_id):
-            command = f"dl_tui_server --python launch.json"
+            command = f"dl_tui_server launch.json"
             stdout, stderr = subprocess.Popen(
                 command,
                 shell=True,
@@ -546,6 +583,12 @@ def query_post(query_file, python_file=None, **kwargs):
             ).communicate()
 
         shutil.rmtree(unique_id)  # Removing temporary directory. NOTE: Comment for debugging.
+
+        stdout = str(stdout, encoding="utf-8")
+        stderr = str(stderr, encoding="utf-8")
+
+        if stderr != "":
+            return f"An error occurred while submitting the job: {stderr}", 501
 
         return f"Files processed successfully, ID: {unique_id}", 200
 
@@ -672,6 +715,12 @@ def launch_container(query_file, container_file=None, **kwargs):  # noqa: E501
             ).communicate()
 
         shutil.rmtree(unique_id)  # Removing temporary directory. NOTE: Comment for debugging.
+
+        stdout = str(stdout, encoding="utf-8")
+        stderr = str(stderr, encoding="utf-8")
+
+        if stderr != "":
+            return f"An error occurred while submitting the job: {stderr}", 501
 
         return f"Files processed successfully, ID: {unique_id}", 200
 
