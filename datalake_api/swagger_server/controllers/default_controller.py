@@ -621,7 +621,7 @@ def launch_container(query_file, container_file=None, **kwargs):  # noqa: E501
     try:
         exec_command = request.form["exec_command"]
     except KeyError:
-        return "Missing query file or configuration", 400
+        exec_command = None
 
     try:
         config_json = json.loads(request.form["config_json"])
