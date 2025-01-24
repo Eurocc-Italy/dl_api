@@ -285,12 +285,21 @@ components:
     launch_container_body:
       required:
         - query_file
+        - container_file
+        - input_json
+        - output_json
       type: object
       properties:
         query_file:
           type: string
           format: binary
         container_file:
+          type: string
+          format: binary
+        input_json:
+          type: string
+          format: binary
+        output_json:
           type: string
           format: binary
 
