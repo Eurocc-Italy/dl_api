@@ -260,6 +260,7 @@ def validate_config(config):
 ########################################################################################################
 ### API ENDPOINT IMPLEMENTATIONS
 
+
 def job_status():
     """
     Shows information about job status on HPC, optionally filtering for Data Lake user.
@@ -292,10 +293,11 @@ def job_status():
             return jsonify({"jobs": jobs}), 200
         else:
             return jsonify({"jobs": {}}), 200
-        
+
     except Exception as e:
         logger.error(f"An error occurred in job_status: {str(e)}")
         return jsonify({"error": "Internal Server Error", "message": str(e)}), 500
+
 
 def browse_files():
     """
@@ -605,11 +607,14 @@ def query_post(query_file, python_file=None, **kwargs):
         logger.error(f"An error occurred: {str(e)}")
         return f"An error occurred: {str(e)}", 500
 
-def launch_container(query_file, container_file=None, **kwargs):  # noqa: E501
+
+def launch_container(query_file, input_json, output_json, container_file=None, **kwargs):  # noqa: E501
     """Launch Singularity container on datalake items matching the query
 
     Args:
         query_file (FileStorage): The SQL query file.
+        input_json (FileStorage, optional): The JSON file containing info on where to download input files
+        output_json (FileStorage, optional): The JSON file containing info on where to upload output files
         container_file (FileStorage, optional): The Singularity container for data manipulation.
         container_url (str, optional): The URL where the Singularity container can be downloaded.
         exec_command : (str, optional): The command to be launched within the container (with its own options and flags)
@@ -626,6 +631,14 @@ def launch_container(query_file, container_file=None, **kwargs):  # noqa: E501
         container_url = request.form["container_url"]
     except KeyError:
         container_url = None
+
+    input_dict = json.loads(input_json.read().decode("utf-8"))
+    with open("input.json", "w") as f:
+        f.write(json.dumps(input_dict))
+
+    output_dict = json.loads(output_json.read().decode("utf-8"))
+    with open("output.json", "w") as f:
+        f.write(json.dumps(output_dict))
 
     try:
         exec_command = request.form["exec_command"]
@@ -736,6 +749,7 @@ def launch_container(query_file, container_file=None, **kwargs):  # noqa: E501
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}")
         return f"An error occurred: {str(e)}", 500
+
 
 def replace_entry(file, json_data, **kwargs):
     """
