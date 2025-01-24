@@ -285,9 +285,6 @@ components:
     launch_container_body:
       required:
         - query_file
-        - container_file
-        - input_json
-        - output_json
       type: object
       properties:
         query_file:
