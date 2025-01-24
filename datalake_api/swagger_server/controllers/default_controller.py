@@ -9,6 +9,7 @@ import uuid
 from io import BytesIO
 from pathlib import Path
 from tempfile import mkdtemp
+from datetime import datetime
 
 from decouple import Config, RepositoryEnv
 from flask import send_file, request, Response, jsonify
@@ -26,6 +27,7 @@ from swagger_server import util  # try to remove
 from swagger_server.models.asset import Asset  # try to remove
 from swagger_server.models.update_path_body import UpdatePathBody  # try to remove
 from dlaas.tuilib.common import sanitize_dictionary
+from dlaas.tuilib.server import check_jobs_status
 
 
 # Grab Main Directiories Paths
@@ -89,10 +91,12 @@ def translate_sql_to_mongo(filter_param):
     """
     # Operator mappings
     operators_mapping = {
+        ">=": "$gte",
+        "<=": "$lte",
+        "!=": "$ne",
         "=": "$eq",
         ">": "$gt",
         "<": "$lt",
-        "!=": "$ne",
     }
 
     def parse_condition(condition):
@@ -254,6 +258,42 @@ def validate_config(config):
 ########################################################################################################
 ### API ENDPOINT IMPLEMENTATIONS
 
+def job_status():
+    """
+    Shows information about job status on HPC, optionally filtering for Data Lake user.
+    Available info:
+
+    Args:
+        user (str, optional): Data Lake username for which jobs should be filtered
+
+    Returns:
+        Response: A JSON response containing the table with job status info.
+    """
+
+    # Extract the token from the Authorization header
+    auth_header = request.headers.get("Authorization")
+
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
+        decoded_token = decode_token(token)
+        user_id = decoded_token.get("sub", "N/A")
+    else:
+        # Handle cases where the Authorization header is missing or improperly formatted
+        return {"message": "Unauthorized: Token missing or malformed"}, 401
+
+    user = request.args.get("user", None)  # Extracting the SQL-like filter parameter
+    logger.info(f"API call to job_status with user: {user}", extra={"token": token, "user_id": user_id})
+
+    try:
+        jobs = check_jobs_status()
+        if jobs:
+            return jsonify({"jobs": jobs}), 200
+        else:
+            return jsonify({"jobs": {}}), 200
+        
+    except Exception as e:
+        logger.error(f"An error occurred in job_status: {str(e)}")
+        return jsonify({"error": "Internal Server Error", "message": str(e)}), 500
 
 def browse_files():
     """
@@ -504,13 +544,14 @@ def query_post(query_file, python_file=None, **kwargs):
 
         # Generate a unique ID and create a temporary directory
         unique_id = str(uuid.uuid4().hex)
-        tdir = mkdtemp(prefix=unique_id, dir=os.getcwd())
+        os.makedirs(unique_id)
+        # tdir = mkdtemp(prefix=unique_id, dir=os.getcwd()) # NOTE: otherwise, it appends a random suffix to the job ID
 
         query_content = query_file.read().decode("utf-8")
 
         # Save script.py in the temporary directory if provided
         script_filename = f"user_script_{unique_id}.py"
-        script_path = os.path.join(tdir, script_filename)
+        script_path = os.path.join(unique_id, script_filename)
         if python_file:
             with open(script_path, "w") as script_out:
                 script_out.write(python_file.read().decode("utf-8"))
@@ -525,14 +566,14 @@ def query_post(query_file, python_file=None, **kwargs):
             "config_hpc": config_hpc or {},  # Insert empty dict if None
             "config_server": config_server or {},  # Insert empty dict if None
         }
-        launch_path = os.path.join(tdir, "launch.json")
+        launch_path = os.path.join(unique_id, "launch.json")
         with open(launch_path, "w") as launch_out:
             json.dump(launch_data, launch_out, indent=4)
 
         # Execute the command within the temporary directory
         # NOTE : same as before, since we're in the temporary directory we can just send the relative path of
         # the json file, otherwise the client version on HPC gets a wrong path
-        with pushd(tdir):
+        with pushd(unique_id):
             command = f"dl_tui_server launch.json"
             stdout, stderr = subprocess.Popen(
                 command,
@@ -541,7 +582,13 @@ def query_post(query_file, python_file=None, **kwargs):
                 stderr=subprocess.PIPE,
             ).communicate()
 
-        shutil.rmtree(tdir)  # Removing temporary directory. Comment for debugging.
+        shutil.rmtree(unique_id)  # Removing temporary directory. NOTE: Comment for debugging.
+
+        stdout = str(stdout, encoding="utf-8")
+        stderr = str(stderr, encoding="utf-8")
+
+        if stderr != "":
+            return f"An error occurred while submitting the job: {stderr}", 501
 
         return f"Files processed successfully, ID: {unique_id}", 200
 
@@ -549,6 +596,137 @@ def query_post(query_file, python_file=None, **kwargs):
         logger.error(f"An error occurred: {str(e)}")
         return f"An error occurred: {str(e)}", 500
 
+def launch_container(query_file, container_file=None, **kwargs):  # noqa: E501
+    """Launch Singularity container on datalake items matching the query
+
+    Args:
+        query_file (FileStorage): The SQL query file.
+        container_file (FileStorage, optional): The Singularity container for data manipulation.
+        container_url (str, optional): The URL where the Singularity container can be downloaded.
+        exec_command : (str, optional): The command to be launched within the container (with its own options and flags)
+        **kwargs: Additional keyword arguments (contains token information).
+
+    Returns:
+        tuple: A tuple containing the response message and status code.
+    """
+    # Information printed for system log
+    logger.debug("Dictionary with token info:")
+    logger.debug(kwargs)
+
+    try:
+        container_url = request.form["container_url"]
+    except KeyError:
+        container_url = None
+
+    try:
+        exec_command = request.form["exec_command"]
+    except KeyError:
+        exec_command = None
+
+    try:
+        config_json = json.loads(request.form["config_json"])
+    except KeyError:
+        config_json = None
+
+    # Extract the token from the Authorization header
+    auth_header = request.headers.get("Authorization")
+
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header[7:]  # Strip 'Bearer ' prefix to get the actual token
+        decoded_token = decode_token(token)
+        user_id = decoded_token.get("sub", "N/A")
+    else:
+        # Handle cases where the Authorization header is missing or improperly formatted
+        return {"message": "Unauthorized: Token missing or malformed"}, 401
+
+    unique_id = str(uuid.uuid4().hex)
+    logger.info("API call to %s", "launch_container", extra={"uuid": unique_id, "token": token, "user_id": user_id})
+
+    try:
+        # Ensure the query file and config JSON are provided
+        if not query_file:
+            return "Missing query file or configuration", 400
+
+        if config_json:
+            try:
+                config_server = config_json["config_server"]
+                sanitize_dictionary(config_server)
+            except KeyError:
+                config_server = None
+            except ValueError as e:
+                logger.error(f"Validation error: {str(e)}")
+                return {"message": str(e)}, 400
+
+            try:
+                config_hpc = config_json["config_hpc"]
+                sanitize_dictionary(config_server)
+            except KeyError:
+                config_hpc = None
+            except ValueError as e:
+                logger.error(f"Validation error: {str(e)}")
+                return {"message": str(e)}, 400
+        else:
+            config_hpc = None
+            config_server = None
+
+        logger.debug(f"config_hpc: {config_hpc}")
+        logger.debug(f"config_server: {config_server}")
+
+        # Generate a unique ID and create a temporary directory
+        unique_id = str(uuid.uuid4().hex)
+        os.makedirs(unique_id)
+        # tdir = mkdtemp(prefix=unique_id, dir=os.getcwd()) # NOTE: otherwise, it appends a random suffix to the job ID
+
+        query_content = query_file.read().decode("utf-8")
+
+        # Save container in the temporary directory if provided
+        container_filename = f"container_{unique_id}.sif"
+        container_path = os.path.join(unique_id, container_filename)
+        if container_file:
+            with open(container_path, "wb") as script_out:
+                script_out.write(container_file.read())
+
+        # Prepare and save launch.json in the temporary directory
+        # NOTE : container_path should be a relative path to the temporary directory, otherwise on the "launcher"
+        # it has a path like /home/centos/.../{uuid4.hex}/container.sif which will not be found on HPC
+        launch_data = {
+            "sql_query": query_content,
+            "container_path": os.path.basename(container_path) if container_file else None,
+            "container_url": container_url,
+            "exec_command": exec_command,
+            "id": unique_id,
+            "config_hpc": config_hpc or {},  # Insert empty dict if None
+            "config_server": config_server or {},  # Insert empty dict if None
+        }
+        launch_path = os.path.join(unique_id, "launch.json")
+        with open(launch_path, "w") as launch_out:
+            json.dump(launch_data, launch_out, indent=4)
+
+        # Execute the command within the temporary directory
+        # NOTE : same as before, since we're in the temporary directory we can just send the relative path of
+        # the json file, otherwise the client version on HPC gets a wrong path
+        with pushd(unique_id):
+            command = f"dl_tui_server launch.json"
+            stdout, stderr = subprocess.Popen(
+                command,
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            ).communicate()
+
+        shutil.rmtree(unique_id)  # Removing temporary directory. NOTE: Comment for debugging.
+
+        stdout = str(stdout, encoding="utf-8")
+        stderr = str(stderr, encoding="utf-8")
+
+        if stderr != "":
+            return f"An error occurred while submitting the job: {stderr}", 501
+
+        return f"Files processed successfully, ID: {unique_id}", 200
+
+    except Exception as e:
+        logger.error(f"An error occurred: {str(e)}")
+        return f"An error occurred: {str(e)}", 500
 
 def replace_entry(file, json_data, **kwargs):
     """
@@ -614,6 +792,7 @@ def replace_entry(file, json_data, **kwargs):
         json_data_dict = json.loads(json_data_str)
         json_data_dict["s3_key"] = sanitized_filename
         json_data_dict["path"] = f"{env_config.get('PFS_PATH_PREFIX')}/{sanitized_filename}"
+        json_data_dict["upload_date"] = str(datetime.now())
 
         s3.upload_fileobj(
             Fileobj=file,
@@ -751,6 +930,7 @@ def upload_post(file, json_data, **kwargs):
         json_data_dict = json.loads(json_data_str)
         json_data_dict["s3_key"] = sanitized_filename
         json_data_dict["path"] = f"{env_config.get('PFS_PATH_PREFIX')}/{sanitized_filename}"
+        json_data_dict["upload_date"] = str(datetime.now())
 
         if collection.find_one({"s3_key": sanitized_filename}):
             return f"Upload Failed, entry is already present. Please use PUT method to update an existing entry", 400
