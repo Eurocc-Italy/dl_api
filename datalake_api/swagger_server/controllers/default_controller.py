@@ -632,13 +632,6 @@ def launch_container(query_file, input_json, output_json, container_file=None, *
     except KeyError:
         container_url = None
 
-    input_dict = json.loads(input_json.read().decode("utf-8"))
-    with open("input.json", "w") as f:
-        f.write(json.dumps(input_dict))
-
-    output_dict = json.loads(output_json.read().decode("utf-8"))
-    with open("output.json", "w") as f:
-        f.write(json.dumps(output_dict))
 
     try:
         exec_command = request.form["exec_command"]
@@ -698,6 +691,15 @@ def launch_container(query_file, input_json, output_json, container_file=None, *
         unique_id = str(uuid.uuid4().hex)
         os.makedirs(unique_id)
         # tdir = mkdtemp(prefix=unique_id, dir=os.getcwd()) # NOTE: otherwise, it appends a random suffix to the job ID
+
+        # Copy input/output json to temporary directory
+        input_dict = json.loads(input_json.read().decode("utf-8"))
+        with open(f"{unique_id}/input.json", "w") as f:
+            f.write(json.dumps(input_dict))
+
+        output_dict = json.loads(output_json.read().decode("utf-8"))
+        with open(f"{unique_id}/output.json", "w") as f:
+            f.write(json.dumps(output_dict))
 
         query_content = query_file.read().decode("utf-8")
 
