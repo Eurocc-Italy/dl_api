@@ -20,7 +20,7 @@ REQUIRES = [
     "swagger-ui-bundle",
     "pymongo == 4.5.0",
     "urllib3 == 1.26.19",
-    #"dl_tui @ git+https://github.com/Eurocc-Italy/dl_tui",
+    "dl_tui @ git+https://github.com/Eurocc-Italy/dl_tui",
     "boto3",
     "python-decouple",
     "python-dotenv",
