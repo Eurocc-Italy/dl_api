@@ -28,11 +28,13 @@ from swagger_server.models.asset import Asset  # try to remove
 from swagger_server.models.update_path_body import UpdatePathBody  # try to remove
 from dlaas.tuilib.common import sanitize_dictionary
 from dlaas.tuilib.server import check_jobs_status
+from dlaas.tuilib.common import Config as dlaasConfig
 
 
 # Grab Main Directiories Paths
 DOTENV_FILE = f"{os.getenv('HOME')}/.env"
 env_config = Config(RepositoryEnv(DOTENV_FILE))
+config_dlaas = dlaasConfig(version="hpc")
 
 
 ### START LOGGING CONFIGUARTION ###
@@ -322,10 +324,16 @@ def browse_files():
     try:
         mongo_query = translate_sql_to_mongo(filter_param) if filter_param is not None else {}
 
-        # Initialize MongoDB client
-        client = MongoClient(env_config.get("MONGO_HOST"), int(env_config.get("MONGO_PORT")))
-        db = client[env_config.get("MONGO_DB_NAME")]
-        collection = db[env_config.get("MONGO_COLLECTION_NAME")]
+        # setting up MongoDB URI
+        mongodb_uri = f"mongodb://{config_dlaas.user}:{config_dlaas.password}@localhost:{config_dlaas.port}/"
+
+        # connecting to MongoDB server
+        logger.info(f"Connecting to MongoDB client: {mongodb_uri}")
+        client = MongoClient(mongodb_uri)
+
+        # accessing collection
+        logger.info(f"Loading database {config_dlaas.database}, collection {config_dlaas.collection}")
+        collection = client[config_dlaas.database][config_dlaas.collection]
 
         if not mongo_query:  # This checks if the query is an empty dictionary
             files = collection.find({}, {"_id": 0, "s3_key": 1})  # Explicitly pass an empty dictionary
@@ -371,16 +379,17 @@ def delete_file(file_name, **kwargs):
         "API call to %s", "delete_id_get", extra={"File": sanitized_filename, "token": token, "user_id": user_id}
     )
 
-    # Initialize MongoDB client with decouple
-    mongo_host = env_config.get("MONGO_HOST", default="localhost")
-    mongo_port = env_config.get("MONGO_PORT", default=27017, cast=int)
-    mongo_db_name = env_config.get("MONGO_DB_NAME", default="datalake")
-    mongo_collection_name = env_config.get("MONGO_COLLECTION_NAME", default="metadata")
+    # setting up MongoDB URI
+    mongodb_uri = f"mongodb://{config_dlaas.user}:{config_dlaas.password}@localhost:{config_dlaas.port}/"
 
-    client = MongoClient(mongo_host, mongo_port)
-    db = client[mongo_db_name]
-    collection = db[mongo_collection_name]
+    # connecting to MongoDB server
+    logger.info(f"Connecting to MongoDB client: {mongodb_uri}")
+    client = MongoClient(mongodb_uri)
 
+    # accessing collection
+    logger.info(f"Loading database {config_dlaas.database}, collection {config_dlaas.collection}")
+    collection = client[config_dlaas.database][config_dlaas.collection]
+    
     try:
         #  validate the file path
         if not is_valid_filename(sanitized_filename):
@@ -395,11 +404,11 @@ def delete_file(file_name, **kwargs):
             # NOTE: S3 credentials must be saved in ~/.aws/config file
             s3 = boto3.client(
                 service_name="s3",
-                endpoint_url=env_config.get("S3_ENDPOINT_URL"),
+                endpoint_url=config_dlaas.s3_endpoint_url,
             )
 
             s3.delete_object(
-                Bucket=env_config.get("S3_BUCKET"),
+                Bucket=config_dlaas.s3_bucket,
                 Key=sanitized_filename,
             )
 
@@ -456,10 +465,10 @@ def download_id_get(file_name, **kwargs):  # noqa: E501
         # NOTE: S3 credentials must be saved in ~/.aws/config file
         s3 = boto3.client(
             service_name="s3",
-            endpoint_url=env_config.get("S3_ENDPOINT_URL"),
+            endpoint_url=config_dlaas.s3_endpoint_url,
         )
 
-        s3_object = s3.get_object(Bucket=env_config.get("S3_BUCKET"), Key=sanitized_filename)
+        s3_object = s3.get_object(Bucket=config_dlaas.s3_bucket, Key=sanitized_filename)
 
         file_content = s3_object["Body"].read()
 
@@ -763,15 +772,16 @@ def replace_entry(file, json_data, **kwargs):
         "API call to %s", "replace_entry", extra={"File": sanitized_filename, "token": token, "user_id": user_id}
     )
 
-    # Initialize MongoDB client
-    mongo_host = env_config.get("MONGO_HOST", default="localhost")
-    mongo_port = env_config.get("MONGO_PORT", default=27017, cast=int)
-    mongo_db_name = env_config.get("MONGO_DB_NAME", default="datalake")
-    mongo_collection_name = env_config.get("MONGO_COLLECTION_NAME", default="metadata")
+    # setting up MongoDB URI
+    mongodb_uri = f"mongodb://{config_dlaas.user}:{config_dlaas.password}@localhost:{config_dlaas.port}/"
 
-    client = MongoClient(mongo_host, mongo_port)
-    db = client[mongo_db_name]
-    collection = db[mongo_collection_name]
+    # connecting to MongoDB server
+    logger.info(f"Connecting to MongoDB client: {mongodb_uri}")
+    client = MongoClient(mongodb_uri)
+
+    # accessing collection
+    logger.info(f"Loading database {config_dlaas.database}, collection {config_dlaas.collection}")
+    collection = client[config_dlaas.database][config_dlaas.collection]
 
     if not collection.find_one({"s3_key": sanitized_filename}):
         return f"Replacement failed, file not found. Please use POST method to create a new entry", 400
@@ -784,19 +794,19 @@ def replace_entry(file, json_data, **kwargs):
         # NOTE: S3 credentials must be saved in ~/.aws/config file
         s3 = boto3.client(
             service_name="s3",
-            endpoint_url=env_config.get("S3_ENDPOINT_URL"),
+            endpoint_url=config_dlaas.s3_endpoint_url,
         )
 
         # Insert json_data into MongoDB
         json_data_str = json_data.read().decode("utf-8")
         json_data_dict = json.loads(json_data_str)
         json_data_dict["s3_key"] = sanitized_filename
-        json_data_dict["path"] = f"{env_config.get('PFS_PATH_PREFIX')}/{sanitized_filename}"
+        json_data_dict["path"] = f"{config_dlaas.pfs_prefix_path}/{sanitized_filename}"
         json_data_dict["upload_date"] = str(datetime.now())
 
         s3.upload_fileobj(
             Fileobj=file,
-            Bucket=env_config.get("S3_BUCKET"),
+            Bucket=config_dlaas.s3_bucket,
             Key=sanitized_filename,
         )
         collection.find_one_and_replace({"s3_key": sanitized_filename}, json_data_dict)
@@ -842,15 +852,16 @@ def update_entry(json_data, **kwargs):  # noqa: E501
     # Verify if implement sanification
     file = request.form["file"]
 
-    # Initialize MongoDB client
-    mongo_host = env_config.get("MONGO_HOST", default="localhost")
-    mongo_port = env_config.get("MONGO_PORT", default=27017, cast=int)
-    mongo_db_name = env_config.get("MONGO_DB_NAME", default="datalake")
-    mongo_collection_name = env_config.get("MONGO_COLLECTION_NAME", default="metadata")
+    # setting up MongoDB URI
+    mongodb_uri = f"mongodb://{config_dlaas.user}:{config_dlaas.password}@localhost:{config_dlaas.port}/"
 
-    client = MongoClient(mongo_host, mongo_port)
-    db = client[mongo_db_name]
-    collection = db[mongo_collection_name]
+    # connecting to MongoDB server
+    logger.info(f"Connecting to MongoDB client: {mongodb_uri}")
+    client = MongoClient(mongodb_uri)
+
+    # accessing collection
+    logger.info(f"Loading database {config_dlaas.database}, collection {config_dlaas.collection}")
+    collection = client[config_dlaas.database][config_dlaas.collection]
 
     try:
         if not collection.find_one({"s3_key": file}):
@@ -903,15 +914,16 @@ def upload_post(file, json_data, **kwargs):
 
     logger.info("API call to %s", "upload_post", extra={"File": sanitized_filename, "token": token, "user_id": user_id})
 
-    # Initialize MongoDB client
-    mongo_host = env_config.get("MONGO_HOST", default="localhost")
-    mongo_port = env_config.get("MONGO_PORT", default=27017, cast=int)
-    mongo_db_name = env_config.get("MONGO_DB_NAME", default="datalake")
-    mongo_collection_name = env_config.get("MONGO_COLLECTION_NAME", default="metadata")
+    # setting up MongoDB URI
+    mongodb_uri = f"mongodb://{config_dlaas.user}:{config_dlaas.password}@localhost:{config_dlaas.port}/"
 
-    client = MongoClient(mongo_host, mongo_port)
-    db = client[mongo_db_name]
-    collection = db[mongo_collection_name]
+    # connecting to MongoDB server
+    logger.info(f"Connecting to MongoDB client: {mongodb_uri}")
+    client = MongoClient(mongodb_uri)
+
+    # accessing collection
+    logger.info(f"Loading database {config_dlaas.database}, collection {config_dlaas.collection}")
+    collection = client[config_dlaas.database][config_dlaas.collection]
 
     try:
         #  validate the file path
@@ -921,7 +933,7 @@ def upload_post(file, json_data, **kwargs):
         # NOTE: S3 credentials must be saved in ~/.aws/config file
         s3 = boto3.client(
             service_name="s3",
-            endpoint_url=env_config.get("S3_ENDPOINT_URL"),
+            endpoint_url=config_dlaas.s3_endpoint_url,
         )
 
         # Insert json_data into MongoDB
@@ -929,7 +941,7 @@ def upload_post(file, json_data, **kwargs):
         json_data_str = json_data.read().decode("utf-8")
         json_data_dict = json.loads(json_data_str)
         json_data_dict["s3_key"] = sanitized_filename
-        json_data_dict["path"] = f"{env_config.get('PFS_PATH_PREFIX')}/{sanitized_filename}"
+        json_data_dict["path"] = f"{config_dlaas.pfs_prefix_path}/{sanitized_filename}"
         json_data_dict["upload_date"] = str(datetime.now())
 
         if collection.find_one({"s3_key": sanitized_filename}):
@@ -938,7 +950,7 @@ def upload_post(file, json_data, **kwargs):
         # Read file content into a binary stream
         s3.upload_fileobj(
             Fileobj=file,
-            Bucket=env_config.get("S3_BUCKET"),
+            Bucket=config_dlaas.s3_bucket,
             Key=sanitized_filename,
         )
         collection.insert_one(json_data_dict)
