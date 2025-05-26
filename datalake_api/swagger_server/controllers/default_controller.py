@@ -283,11 +283,11 @@ def job_status():
         # Handle cases where the Authorization header is missing or improperly formatted
         return {"message": "Unauthorized: Token missing or malformed"}, 401
 
-    user = request.args.get("user", None)  # Extracting the SQL-like filter parameter
-    logger.info(f"API call to job_status with user: {user}", extra={"token": token, "user_id": user_id})
+    hpc_ip = request.args.get("hpc_ip", None)  # Extracting the SQL-like filter parameter
+    logger.info(f"API call to job_status with IP: {hpc_ip}", extra={"token": token, "user_id": user_id})
 
     try:
-        jobs = check_jobs_status()
+        jobs = check_jobs_status(hpc_ip=hpc_ip)
         if jobs:
             return jsonify({"jobs": jobs}), 200
         else:
