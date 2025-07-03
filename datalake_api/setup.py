@@ -4,7 +4,7 @@ import sys
 from setuptools import setup, find_packages
 
 NAME = "swagger_server"
-VERSION = "1.1"
+VERSION = "1.2"
 # To install the library, run the following
 #
 # python setup.py install
